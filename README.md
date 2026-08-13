@@ -58,7 +58,9 @@ python3 -m http.server 8000
 ### 2. 部署到 GitHub Pages（免费、免备案）
 
 本项目已部署在公开仓库 **`GuZhengSVT/BI9CKE-QSL-Logbook`**，站点地址：
-`https://GuZhengSVT.github.io/BI9CKE-QSL-Logbook/`
+
+- **`https://www.guzhengsvt.cn/BI9CKE-QSL-Logbook/`** ← 实际访问地址
+- `https://GuZhengSVT.github.io/BI9CKE-QSL-Logbook/` ← 自动 301 跳转到上面（你的账号已为用户级 Pages 绑定了 `guzhengsvt.cn`，GitHub 会把项目站点一并重定向到该域名）
 
 若需自行搭建（或迁移到新仓库），步骤如下：
 
