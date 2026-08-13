@@ -1,6 +1,6 @@
 /* ============================================================================
  * app.js — 应用外壳 + 通联日志页（表格 / 筛选 / 分页 / 详情 / QSL 快捷操作）
- * 依赖: adif.js, store.js
+ * 依赖: i18n.js, adif.js, store.js
  * 对外暴露: window.App, window.Utils
  * ==========================================================================*/
 'use strict';
@@ -22,7 +22,7 @@ const Utils = {
   },
   badge(code, isRcvd) {
     const info = ADIF.qslStatusInfo(code, isRcvd);
-    return `<span class="badge badge-${info.color}">${Utils.esc(info.label)}</span>`;
+    return `<span class="badge badge-${info.color}">${Utils.esc(I18N.t(info.labelKey))}</span>`;
   }
 };
 
@@ -42,8 +42,18 @@ const App = {
   async init() {
     this.state.config = await Store.loadConfig();
     this.bindEvents();
+    this.updateSiteHeader();
     await this.refresh();
     this.showTab(location.hash ? location.hash.slice(1) : 'log');
+  },
+
+  /* ------------------------------------------------------ 站点标题（随语言） */
+  updateSiteHeader() {
+    const cfg = this.state.config || {};
+    const call = cfg.call;
+    document.title = call ? I18N.t('titleWithCall', { call }) : I18N.t('title');
+    document.getElementById('site-name').textContent = call ? I18N.t('siteName', { call }) : I18N.t('appName');
+    document.getElementById('site-sub').textContent = cfg.name || I18N.t('appSub');
   },
 
   /* ------------------------------------------------------------- 数据刷新 */
@@ -141,7 +151,7 @@ const App = {
         return;
       }
       case 'delete': {
-        if (confirm(`确认删除 ${rec.CALL} ${rec.QSO_DATE} 这条记录？\n（删除会写入本地草稿，提交仓库后生效）`)) {
+        if (confirm(I18N.t('deleteConfirm', { call: rec.CALL, date: rec.QSO_DATE }))) {
           Store.remove(ADIF.recordId(rec));
           this.refresh();
         }
@@ -192,17 +202,17 @@ const App = {
     const sel = (key) => this.state.filter[key];
 
     document.getElementById('log-filters').innerHTML = `
-      <input type="search" name="q" placeholder="搜索呼号 / 国家 / 网格 / 备注…" value="${Utils.esc(sel('q'))}">
-      <select name="band"><option value="">全部波段</option>${distinct('BAND').map(b => `<option ${b === sel('band') ? 'selected' : ''}>${Utils.esc(b)}</option>`).join('')}</select>
-      <select name="mode"><option value="">全部模式</option>${distinct('MODE').map(m => `<option ${m === sel('mode') ? 'selected' : ''}>${Utils.esc(m)}</option>`).join('')}</select>
-      <select name="year"><option value="">全部年份</option>${years.map(y => `<option ${y === sel('year') ? 'selected' : ''}>${y}</option>`).join('')}</select>
-      <select name="country"><option value="">全部国家</option>${distinct('COUNTRY').map(c => `<option ${c === sel('country') ? 'selected' : ''}>${Utils.esc(c)}</option>`).join('')}</select>
-      <span class="filter-count">共 ${total} 条</span>
+      <input type="search" name="q" placeholder="${Utils.esc(I18N.t('filterSearch'))}" value="${Utils.esc(sel('q'))}">
+      <select name="band"><option value="">${Utils.esc(I18N.t('allBands'))}</option>${distinct('BAND').map(b => `<option ${b === sel('band') ? 'selected' : ''}>${Utils.esc(b)}</option>`).join('')}</select>
+      <select name="mode"><option value="">${Utils.esc(I18N.t('allModes'))}</option>${distinct('MODE').map(m => `<option ${m === sel('mode') ? 'selected' : ''}>${Utils.esc(m)}</option>`).join('')}</select>
+      <select name="year"><option value="">${Utils.esc(I18N.t('allYears'))}</option>${years.map(y => `<option ${y === sel('year') ? 'selected' : ''}>${y}</option>`).join('')}</select>
+      <select name="country"><option value="">${Utils.esc(I18N.t('allCountries'))}</option>${distinct('COUNTRY').map(c => `<option ${c === sel('country') ? 'selected' : ''}>${Utils.esc(c)}</option>`).join('')}</select>
+      <span class="filter-count">${Utils.esc(I18N.t('filterCount', { n: total }))}</span>
     `;
 
     const tbody = document.getElementById('log-body');
     if (slice.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="empty">暂无通联记录。去「录入」页添加，或把 data/log.adi 替换成你的 ADIF 日志。</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">${Utils.esc(I18N.t('logEmpty'))}</td></tr>`;
     } else {
       tbody.innerHTML = slice.map(rec => {
         const id = ADIF.recordId(rec);
@@ -226,11 +236,11 @@ const App = {
     // 分页
     const pager = document.getElementById('log-pager');
     pager.innerHTML = `
-      <button ${page <= 1 ? 'disabled' : ''} data-pg="prev">上一页</button>
-      <span class="page-info">第 ${page} / ${pages} 页</span>
-      <button ${page >= pages ? 'disabled' : ''} data-pg="next">下一页</button>
-      <select class="page-size" title="每页条数">
-        ${[25, 50, 100, 200].map(n => `<option value="${n}" ${n === pageSize ? 'selected' : ''}>${n} 条/页</option>`).join('')}
+      <button ${page <= 1 ? 'disabled' : ''} data-pg="prev">${Utils.esc(I18N.t('pagerPrev'))}</button>
+      <span class="page-info">${Utils.esc(I18N.t('pagerInfo', { page, pages }))}</span>
+      <button ${page >= pages ? 'disabled' : ''} data-pg="next">${Utils.esc(I18N.t('pagerNext'))}</button>
+      <select class="page-size" title="per page">
+        ${[25, 50, 100, 200].map(n => `<option value="${n}" ${n === pageSize ? 'selected' : ''}>${Utils.esc(I18N.t('perPage', { n }))}</option>`).join('')}
       </select>`;
     pager.onclick = e => {
       const btn = e.target.closest('button[data-pg]');
@@ -251,17 +261,28 @@ const App = {
   renderDetail(rec, id) {
     const today = Utils.todayAdif();
     const sentY = rec.QSL_SENT === 'Y', rcvdY = rec.QSL_RCVD === 'Y';
+    const sentLabel = I18N.t(ADIF.qslStatusInfo(rec.QSL_SENT, false).labelKey);
+    const rcvdLabel = I18N.t(ADIF.qslStatusInfo(rec.QSL_RCVD, true).labelKey);
     const fields = [
-      ['呼号', rec.CALL], ['日期 (UTC)', ADIF.prettyDate(rec.QSO_DATE)], ['时间 (UTC)', ADIF.prettyTime(rec.TIME_ON)],
-      ['波段', rec.BAND], ['模式', rec.MODE], ['频率 (MHz)', rec.FREQ],
-      ['RST 发送', rec.RST_SENT], ['RST 接收', rec.RST_RCVD],
-      ['网格', rec.GRIDSQUARE], ['IOTA', rec.IOTA], ['DXCC', rec.DXCC], ['国家/地区', rec.COUNTRY],
-      ['QSL 发出', ADIF.qslStatusInfo(rec.QSL_SENT, false).label + (rec.QSL_SENT_DATE ? ' (' + ADIF.prettyDate(rec.QSL_SENT_DATE) + ')' : '')],
-      ['QSL 收到', ADIF.qslStatusInfo(rec.QSL_RCVD, true).label + (rec.QSL_RCVD_DATE ? ' (' + ADIF.prettyDate(rec.QSL_RCVD_DATE) + ')' : '')],
-      ['QSL 途径', rec.QSL_VIA], ['QSL 附言', rec.QSLMSG],
+      [I18N.t('fldCall'), rec.CALL],
+      [I18N.t('fldDate'), ADIF.prettyDate(rec.QSO_DATE)],
+      [I18N.t('fldTime'), ADIF.prettyTime(rec.TIME_ON)],
+      [I18N.t('fldBand'), rec.BAND],
+      [I18N.t('fldMode'), rec.MODE],
+      [I18N.t('fldFreq'), rec.FREQ],
+      [I18N.t('fldRstS'), rec.RST_SENT],
+      [I18N.t('fldRstR'), rec.RST_RCVD],
+      [I18N.t('fldGrid'), rec.GRIDSQUARE],
+      ['IOTA', rec.IOTA],
+      ['DXCC', rec.DXCC],
+      [I18N.t('fldCountry'), rec.COUNTRY],
+      [I18N.t('fldQslS'), sentLabel + (rec.QSL_SENT_DATE ? ' (' + ADIF.prettyDate(rec.QSL_SENT_DATE) + ')' : '')],
+      [I18N.t('fldQslR'), rcvdLabel + (rec.QSL_RCVD_DATE ? ' (' + ADIF.prettyDate(rec.QSL_RCVD_DATE) + ')' : '')],
+      [I18N.t('fldQslVia'), rec.QSL_VIA],
+      [I18N.t('fldQslMsg'), rec.QSLMSG],
       ['LoTW', `${rec.LOTW_QSL_SENT || '—'}/${rec.LOTW_QSL_RCVD || '—'}`],
       ['eQSL', `${rec.EQSL_QSL_SENT || '—'}/${rec.EQSL_QSL_RCVD || '—'}`],
-      ['备注', rec.COMMENT]
+      [I18N.t('fldComment'), rec.COMMENT]
     ].filter(([, v]) => v !== undefined && v !== null && v !== '');
 
     return `
@@ -269,13 +290,13 @@ const App = {
         ${fields.map(([k, v]) => `<div class="detail-item"><span class="detail-key">${Utils.esc(k)}</span><span class="detail-val">${Utils.esc(v)}</span></div>`).join('')}
       </div>
       <div class="detail-actions">
-        <button class="btn btn-sm" data-action="qsl-sent-y" ${sentY ? 'disabled' : ''}>标记 QSL 已寄出</button>
-        <button class="btn btn-sm" data-action="qsl-sent-q" ${sentY ? 'disabled' : ''}>标记待寄出</button>
-        <button class="btn btn-sm" data-action="qsl-rcvd-y" ${rcvdY ? 'disabled' : ''}>标记 QSL 已收到</button>
-        <button class="btn btn-sm" data-action="qsl-rcvd-r" ${rcvdY ? 'disabled' : ''}>标记请求补卡</button>
-        <button class="btn btn-sm" data-action="edit">编辑</button>
-        <button class="btn btn-sm btn-danger" data-action="delete">删除</button>
-        <span class="detail-hint">操作保存在本机草稿，提交到仓库后正式生效</span>
+        <button class="btn btn-sm" data-action="qsl-sent-y" ${sentY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkSent'))}</button>
+        <button class="btn btn-sm" data-action="qsl-sent-q" ${sentY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkQueue'))}</button>
+        <button class="btn btn-sm" data-action="qsl-rcvd-y" ${rcvdY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkRcvd'))}</button>
+        <button class="btn btn-sm" data-action="qsl-rcvd-r" ${rcvdY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnRequestCard'))}</button>
+        <button class="btn btn-sm" data-action="edit">${Utils.esc(I18N.t('btnEdit'))}</button>
+        <button class="btn btn-sm btn-danger" data-action="delete">${Utils.esc(I18N.t('btnDelete'))}</button>
+        <span class="detail-hint">${Utils.esc(I18N.t('detailHint'))}</span>
       </div>`;
   },
 
@@ -285,7 +306,7 @@ const App = {
     const badge = document.getElementById('local-badge');
     const total = c.added + c.updated + c.deleted;
     if (badge) {
-      badge.textContent = total > 0 ? `本机草稿 ${total} 条未提交` : '';
+      badge.textContent = total > 0 ? I18N.t('localBadge', { n: total }) : '';
       badge.classList.toggle('show', total > 0);
     }
   }

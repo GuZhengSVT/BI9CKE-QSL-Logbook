@@ -1,7 +1,7 @@
 /* ============================================================================
  * qsl.js — QSL 卡片管理看板
  * 视图：待发出 / 待收到 / 已确认 / 超时提醒
- * 依赖: adif.js, store.js, app.js
+ * 依赖: i18n.js, adif.js, store.js, app.js
  * 注册到 App.tabs.qsl
  * ==========================================================================*/
 'use strict';
@@ -28,8 +28,14 @@ App.tabs.qsl = function () {
     return d !== null && d >= DAYS_OVERDUE;
   });
 
+  const th = () => `<tr>
+    <th>${Utils.esc(I18N.t('thDate'))}</th><th>${Utils.esc(I18N.t('thCall'))}</th><th>${Utils.esc(I18N.t('thBand'))}/${Utils.esc(I18N.t('thMode'))}</th>
+    <th>${Utils.esc(I18N.t('thQslSent'))}</th><th>${Utils.esc(I18N.t('fldQslSDate'))}</th>
+    <th>${Utils.esc(I18N.t('thQslRcvd'))}</th><th>${Utils.esc(I18N.t('fldQslRDate'))}</th><th></th>
+  </tr>`;
+
   const rows = (list, actions) => list.length === 0
-    ? `<tr><td colspan="7" class="empty">（空）</td></tr>`
+    ? `<tr><td colspan="8" class="empty">${Utils.esc(I18N.t('qslEmpty'))}</td></tr>`
     : list.map(r => {
       const id = ADIF.recordId(r);
       const sentDate = r.QSL_SENT_DATE ? ADIF.prettyDate(r.QSL_SENT_DATE) : '—';
@@ -55,47 +61,52 @@ App.tabs.qsl = function () {
     Store.upsert(next);
     App.refresh();
   };
+  const clearField = (rec, field, dateField) => {
+    const next = { ...rec };
+    delete next[field]; delete next[dateField];
+    Store.upsert(next);
+    App.refresh();
+  };
 
   const btn = (label, cls, fn) => `<button class="btn btn-sm ${cls || ''}" data-fn="${Utils.esc(fn)}">${Utils.esc(label)}</button>`;
-  // 注意：按钮事件用委托处理，避免内联 eval；fn 是字符串键
 
   el.innerHTML = `
     <div class="qsl-summary">
-      <span class="qsl-summary-item"><b>${confirmed.length}</b> 已确认</span>
-      <span class="qsl-summary-item"><b>${toSend.length}</b> 待发出</span>
-      <span class="qsl-summary-item"><b>${toRcvd.length}</b> 待收到</span>
-      <span class="qsl-summary-item warn"><b>${overdue.length}</b> 寄出超时(>${DAYS_OVERDUE}天未收到)</span>
+      <span class="qsl-summary-item"><b>${confirmed.length}</b> ${Utils.esc(I18N.t('qslSummaryConfirmed'))}</span>
+      <span class="qsl-summary-item"><b>${toSend.length}</b> ${Utils.esc(I18N.t('qslSummaryToSend'))}</span>
+      <span class="qsl-summary-item"><b>${toRcvd.length}</b> ${Utils.esc(I18N.t('qslSummaryToRcvd'))}</span>
+      <span class="qsl-summary-item warn"><b>${overdue.length}</b> ${Utils.esc(I18N.t('qslSummaryOverdue', { n: DAYS_OVERDUE }))}</span>
     </div>
 
     <div class="qsl-section">
-      <h3>⚠ 寄出超时提醒（已寄出 ${DAYS_OVERDUE}+ 天未收到）</h3>
+      <h3>${Utils.esc(I18N.t('qslOverdueTitle', { n: DAYS_OVERDUE }))}</h3>
       <table class="log-table">
-        <thead><tr><th>日期</th><th>呼号</th><th>波段/模式</th><th>发出</th><th>寄出日期</th><th>收到</th><th>收到日期</th><th>操作</th></tr></thead>
-        <tbody id="qsl-overdue">${rows(overdue, r => btn('标记已收到', 'btn-green', 'rcvd-y') + btn('请求补卡', 'btn-blue', 'rcvd-r'))}</tbody>
+        <thead>${th()}</thead>
+        <tbody id="qsl-overdue">${rows(overdue, r => btn(I18N.t('btnMarkRcvdShort'), 'btn-green', 'rcvd-y') + btn(I18N.t('btnRequestShort'), 'btn-blue', 'rcvd-r'))}</tbody>
       </table>
     </div>
 
     <div class="qsl-section">
-      <h3>📤 待发出 / 未发出</h3>
+      <h3>${Utils.esc(I18N.t('qslToSendTitle'))}</h3>
       <table class="log-table">
-        <thead><tr><th>日期</th><th>呼号</th><th>波段/模式</th><th>发出</th><th>寄出日期</th><th>收到</th><th>收到日期</th><th>操作</th></tr></thead>
-        <tbody id="qsl-tosend">${rows(toSend, r => btn('标记已寄出', 'btn-green', 'sent-y') + (r.QSL_SENT ? btn('标记待寄出', 'btn-blue', 'sent-q') : ''))}</tbody>
+        <thead>${th()}</thead>
+        <tbody id="qsl-tosend">${rows(toSend, r => btn(I18N.t('btnMarkSentShort'), 'btn-green', 'sent-y') + (r.QSL_SENT ? btn(I18N.t('btnMarkQueueShort'), 'btn-blue', 'sent-q') : ''))}</tbody>
       </table>
     </div>
 
     <div class="qsl-section">
-      <h3>📥 待收到</h3>
+      <h3>${Utils.esc(I18N.t('qslToRcvdTitle'))}</h3>
       <table class="log-table">
-        <thead><tr><th>日期</th><th>呼号</th><th>波段/模式</th><th>发出</th><th>寄出日期</th><th>收到</th><th>收到日期</th><th>操作</th></tr></thead>
-        <tbody id="qsl-torcvd">${rows(toRcvd, r => btn('标记已收到', 'btn-green', 'rcvd-y'))}</tbody>
+        <thead>${th()}</thead>
+        <tbody id="qsl-torcvd">${rows(toRcvd, r => btn(I18N.t('btnMarkRcvdShort'), 'btn-green', 'rcvd-y'))}</tbody>
       </table>
     </div>
 
     <div class="qsl-section">
-      <h3>✅ 已确认</h3>
+      <h3>${Utils.esc(I18N.t('qslConfirmedTitle'))}</h3>
       <table class="log-table">
-        <thead><tr><th>日期</th><th>呼号</th><th>波段/模式</th><th>发出</th><th>寄出日期</th><th>收到</th><th>收到日期</th><th>操作</th></tr></thead>
-        <tbody id="qsl-confirmed">${rows(confirmed, r => btn('撤销已收', 'btn-plain', 'rcvd-clear') + btn('撤销已发', 'btn-plain', 'sent-clear'))}</tbody>
+        <thead>${th()}</thead>
+        <tbody id="qsl-confirmed">${rows(confirmed, r => btn(I18N.t('btnUndoRcvd'), 'btn-plain', 'rcvd-clear') + btn(I18N.t('btnUndoSent'), 'btn-plain', 'sent-clear'))}</tbody>
       </table>
     </div>`;
 
@@ -111,16 +122,10 @@ App.tabs.qsl = function () {
       switch (fn) {
         case 'sent-y': mark(rec, 'QSL_SENT', 'Y'); break;
         case 'sent-q': mark(rec, 'QSL_SENT', 'Q'); break;
-        case 'sent-clear': {
-          const next = { ...rec }; delete next.QSL_SENT; delete next.QSL_SENT_DATE;
-          Store.upsert(next); App.refresh(); break;
-        }
+        case 'sent-clear': clearField(rec, 'QSL_SENT', 'QSL_SENT_DATE'); break;
         case 'rcvd-y': mark(rec, 'QSL_RCVD', 'Y'); break;
         case 'rcvd-r': mark(rec, 'QSL_RCVD', 'R'); break;
-        case 'rcvd-clear': {
-          const next = { ...rec }; delete next.QSL_RCVD; delete next.QSL_RCVD_DATE;
-          Store.upsert(next); App.refresh(); break;
-        }
+        case 'rcvd-clear': clearField(rec, 'QSL_RCVD', 'QSL_RCVD_DATE'); break;
       }
     });
   });

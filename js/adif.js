@@ -27,15 +27,15 @@ const ADIF = (() => {
     'APP_QSL_NOTE', 'COMMENT'
   ];
 
-  // QSL 状态枚举 → 中文显示（ADIF 3.1.4）
+  // QSL 状态枚举 → i18n key（文案由 I18N.t 渲染，见 i18n.js）
   const QSL_STATUS = {
-    N: { label: '未发', labelRcvd: '未收', color: 'gray' },
-    Y: { label: '已发', labelRcvd: '已收', color: 'green' },
-    R: { label: '已请求', labelRcvd: '已请求', color: 'orange' },
-    Q: { label: '排队中', labelRcvd: '排队中', color: 'blue' },
-    I: { label: '忽略', labelRcvd: '忽略', color: 'gray' },
-    S: { label: '已提交', labelRcvd: '已提交', color: 'blue' },
-    M: { label: '卡片局', labelRcvd: '卡片局', color: 'teal' }
+    N: { labelKey: 'qslN', labelRcvdKey: 'qslNRcvd', color: 'gray' },
+    Y: { labelKey: 'qslY', labelRcvdKey: 'qslYRcvd', color: 'green' },
+    R: { labelKey: 'qslR', labelRcvdKey: 'qslRRcvd', color: 'orange' },
+    Q: { labelKey: 'qslQ', labelRcvdKey: 'qslQRcvd', color: 'blue' },
+    I: { labelKey: 'qslI', labelRcvdKey: 'qslIRcvd', color: 'gray' },
+    S: { labelKey: 'qslS', labelRcvdKey: 'qslSRcvd', color: 'blue' },
+    M: { labelKey: 'qslM', labelRcvdKey: 'qslMRcvd', color: 'teal' }
   };
 
   /* ------------------------------------------------------------------ 解析 */
@@ -149,10 +149,10 @@ const ADIF = (() => {
   }
 
   function qslStatusInfo(code, isRcvd) {
-    const info = QSL_STATUS[String(code || '').toUpperCase()] || { label: code || '—', color: 'gray' };
+    const info = QSL_STATUS[String(code || '').toUpperCase()] || { labelKey: 'qslDash', color: 'gray' };
     return {
       code: String(code || '').toUpperCase() || 'N',
-      label: isRcvd ? (info.labelRcvd || info.label) : info.label,
+      labelKey: isRcvd ? (info.labelRcvdKey || info.labelKey) : info.labelKey,
       color: info.color
     };
   }

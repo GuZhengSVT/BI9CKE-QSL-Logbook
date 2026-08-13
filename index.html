@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="业余无线电通联日志与 QSL 卡片交换记录">
+  <meta name="description" content="业余无线电通联日志与 QSL 卡片交换记录 / Amateur Radio QSO log & QSL card exchange">
   <title>业余无线电通联日志 · QSL Logbook</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
@@ -18,16 +18,22 @@
           <p id="site-sub" class="site-sub">通联日志 · QSL 卡片交换记录</p>
         </div>
       </div>
-      <span id="local-badge" class="local-badge"></span>
+      <div class="header-right">
+        <span id="local-badge" class="local-badge"></span>
+        <select id="lang-switch" class="lang-switch" title="Language / 语言" aria-label="Language">
+          <option value="zh-CN">简体中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
     </div>
   </header>
 
   <nav class="nav-bar">
-    <button class="nav-item" data-tab="log">📖 通联日志</button>
-    <button class="nav-item" data-tab="stats">📊 统计</button>
-    <button class="nav-item" data-tab="qsl">💌 QSL 管理</button>
-    <button class="nav-item" data-tab="entry">✍️ 录入 / 导入</button>
-    <button class="nav-item" data-tab="cards">🖼 QSL 卡片</button>
+    <button class="nav-item" data-tab="log" data-i18n="navLog">📖 通联日志</button>
+    <button class="nav-item" data-tab="stats" data-i18n="navStats">📊 统计</button>
+    <button class="nav-item" data-tab="qsl" data-i18n="navQsl">💌 QSL 管理</button>
+    <button class="nav-item" data-tab="entry" data-i18n="navEntry">✍️ 录入 / 导入</button>
+    <button class="nav-item" data-tab="cards" data-i18n="navCards">🖼 QSL 卡片</button>
   </nav>
 
   <main>
@@ -38,8 +44,8 @@
         <table class="log-table">
           <thead>
             <tr>
-              <th>日期</th><th>呼号</th><th>波段</th><th>模式</th>
-              <th>RST 发/收</th><th>网格</th><th>QSL 发出</th><th>QSL 收到</th>
+              <th data-i18n="thDate">日期</th><th data-i18n="thCall">呼号</th><th data-i18n="thBand">波段</th><th data-i18n="thMode">模式</th>
+              <th data-i18n="thRst">RST 发/收</th><th data-i18n="thGrid">网格</th><th data-i18n="thQslSent">QSL 发出</th><th data-i18n="thQslRcvd">QSL 收到</th>
             </tr>
           </thead>
           <tbody id="log-body"></tbody>
@@ -62,12 +68,13 @@
   </main>
 
   <footer class="site-footer">
-    <p>纯静态站点 · 数据以 <code>data/log.adi</code>（ADIF 标准）为权威源 · 本机草稿仅存于当前浏览器</p>
+    <p data-i18n="footer">纯静态站点 · 数据以 data/log.adi（ADIF 标准）为权威源 · 本机草稿仅存于当前浏览器</p>
   </footer>
 
   <!-- 第三方库（本地化，无 CDN 依赖，国内访问友好） -->
   <script src="vendor/echarts.min.js"></script>
   <!-- 应用模块 -->
+  <script src="js/i18n.js"></script>
   <script src="js/adif.js"></script>
   <script src="js/store.js"></script>
   <script src="js/github.js"></script>
@@ -77,19 +84,14 @@
   <script src="js/entry.js"></script>
   <script src="js/cards.js"></script>
   <script>
-    // 启动：设置站点标题 → 初始化应用
-    Store.loadConfig().then(cfg => {
-      if (cfg.call) {
-        document.title = cfg.call + ' 的通联日志 · QSL Logbook';
-        document.getElementById('site-name').textContent = cfg.call + ' · QSL Logbook';
-        document.getElementById('site-sub').textContent =
-          (cfg.name || '业余无线电') + ' · 通联日志 / QSL 卡片交换';
-      }
-    }).then(() => App.init()).catch(err => {
+    // 启动：恢复语言 → 应用静态文本 → 初始化应用
+    document.getElementById('lang-switch').value = I18N.getLang();
+    document.getElementById('lang-switch').addEventListener('change', e => I18N.setLang(e.target.value));
+    I18N.applyStatic();
+    App.init().catch(err => {
       console.error(err);
       document.getElementById('log-body').innerHTML =
-        '<tr><td colspan="8" class="empty">初始化失败：' + Utils.esc(err.message) +
-        '。请通过本地 HTTP 服务访问（如 python3 -m http.server），不要直接双击打开文件。</td></tr>';
+        '<tr><td colspan="8" class="empty">' + Utils.esc(I18N.t('initFail', { msg: err.message })) + '</td></tr>';
     });
   </script>
 </body>

@@ -2,7 +2,7 @@
  * cards.js — QSL 卡片相册页
  * 数据来源: qsl-cards/manifest.json（手动维护或脚本生成）
  * manifest 结构: { "cards": [ {"file": "BG1ABC_20240101.jpg", "call": "BG1ABC", "date": "20240101", "note": ""} ] }
- * 依赖: app.js
+ * 依赖: i18n.js, app.js
  * 注册到 App.tabs.cards
  * ==========================================================================*/
 'use strict';
@@ -11,26 +11,24 @@ App.tabs.cards = function () {
   const el = document.getElementById('page-cards');
   if (!el) return;
 
-  el.innerHTML = '<p class="empty">正在加载卡片列表…</p>';
+  el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('cardsLoading')) + '</p>';
 
   fetch('qsl-cards/manifest.json')
     .then(res => res.ok ? res.json() : Promise.reject(new Error('HTTP ' + res.status)))
     .then(data => render(data.cards || []))
     .catch(err => {
-      el.innerHTML = `<p class="empty">无法加载 qsl-cards/manifest.json（${Utils.esc(err.message)}）。<br>
-        把卡片扫描图放入 <code>qsl-cards/</code> 目录，并在 manifest.json 中登记后即可在此展示。</p>`;
+      el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('cardsLoadFail', { msg: err.message })) + '</p>';
     });
 
   function render(cards) {
     if (cards.length === 0) {
-      el.innerHTML = `<p class="empty">还没有 QSL 卡片图片。<br>
-        将扫描图放入 <code>qsl-cards/</code>，并在 <code>qsl-cards/manifest.json</code> 登记（file / call / date 字段）。</p>`;
+      el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('cardsEmpty')) + '</p>';
       return;
     }
     el.innerHTML = `
       <div class="cards-toolbar">
-        <input type="search" id="card-search" placeholder="按呼号筛选…">
-        <span class="filter-count">共 ${cards.length} 张</span>
+        <input type="search" id="card-search" placeholder="${Utils.esc(I18N.t('cardsSearch'))}">
+        <span class="filter-count">${Utils.esc(I18N.t('cardsCount', { n: cards.length }))}</span>
       </div>
       <div class="card-grid" id="card-grid"></div>
       <div class="lightbox" id="lightbox" hidden>
@@ -48,7 +46,7 @@ App.tabs.cards = function () {
         <figure class="card-fig" data-call="${Utils.esc(c.call || '')}">
           <img loading="lazy" src="qsl-cards/${Utils.esc(c.file)}" alt="QSL card ${Utils.esc(c.call || '')}" data-full="${Utils.esc(c.file)}" data-caption="${Utils.esc(c.call || '')} ${Utils.esc(ADIF.prettyDate(c.date) || '')} ${Utils.esc(c.note || '')}">
           <figcaption>${Utils.esc(c.call || '')}${c.date ? ' · ' + Utils.esc(ADIF.prettyDate(c.date)) : ''}</figcaption>
-        </figure>`).join('') || '<p class="empty">无匹配卡片</p>';
+        </figure>`).join('') || '<p class="empty">' + Utils.esc(I18N.t('cardsNoMatch')) + '</p>';
     };
     renderGrid('');
 

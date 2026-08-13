@@ -70,6 +70,19 @@ body {
 }
 .local-badge.show { display: inline-block; }
 
+.header-right { display: flex; align-items: center; gap: 10px; }
+.lang-switch {
+  background: var(--bg2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+.lang-switch:focus { border-color: var(--accent); }
+
 /* ---------------------------------------------------------------- 导航 */
 .nav-bar {
   max-width: 1100px;

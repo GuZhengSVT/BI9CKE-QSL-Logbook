@@ -1,6 +1,6 @@
 /* ============================================================================
  * entry.js — 录入页（表单录入 / ADIF 导入 / ADIF 导出 / 本地草稿管理 / GitHub 一键提交）
- * 依赖: adif.js, store.js, app.js, github.js
+ * 依赖: i18n.js, adif.js, store.js, app.js, github.js
  * 注册到 App.tabs.entry；暴露 window.Entry
  * ==========================================================================*/
 'use strict';
@@ -14,7 +14,6 @@ const Entry = {
     const el = document.getElementById('page-entry');
     if (!el) return;
     const cfg = App.state.config || {};
-    const c = Store.localChangeCount();
     const commonBands = (cfg.commonBands || ['160M', '80M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '70CM']).join(',');
     const commonModes = (cfg.commonModes || ['SSB', 'CW', 'FT8', 'FM', 'AM', 'RTTY', 'PSK31', 'FT4', 'DSTAR']).join(',');
 
@@ -22,51 +21,51 @@ const Entry = {
       <div class="entry-grid">
         <!-- 左：录入表单 -->
         <div class="entry-form-card">
-          <h3 id="entry-title">新增通联记录</h3>
+          <h3 id="entry-title">${Utils.esc(I18N.t('entryTitle'))}</h3>
           <div class="form-grid">
-            <label>呼号 *<input id="f-call" placeholder="BG1ABC" required></label>
-            <label>日期 (UTC) *<input id="f-date" type="date" value="${Utils.todayAdif().slice(0, 4)}-${Utils.todayAdif().slice(4, 6)}-${Utils.todayAdif().slice(6, 8)}"></label>
-            <label>时间 (UTC)<input id="f-time" type="time" step="1" value=""></label>
-            <label>波段 *<input id="f-band" list="dl-bands" placeholder="20M" required></label>
-            <label>模式 *<input id="f-mode" list="dl-modes" placeholder="SSB" required></label>
-            <label>频率 (MHz)<input id="f-freq" placeholder="14.270"></label>
-            <label>RST 发送<input id="f-rst-s" placeholder="599"></label>
-            <label>RST 接收<input id="f-rst-r" placeholder="599"></label>
-            <label>网格<input id="f-grid" placeholder="OM89AA"></label>
+            <label>${Utils.esc(I18N.t('fldCall'))} *<input id="f-call" placeholder="BG1ABC" required></label>
+            <label>${Utils.esc(I18N.t('fldDate'))} *<input id="f-date" type="date" value="${Utils.todayAdif().slice(0, 4)}-${Utils.todayAdif().slice(4, 6)}-${Utils.todayAdif().slice(6, 8)}"></label>
+            <label>${Utils.esc(I18N.t('fldTime'))}<input id="f-time" type="time" step="1" value=""></label>
+            <label>${Utils.esc(I18N.t('fldBand'))} *<input id="f-band" list="dl-bands" placeholder="20M" required></label>
+            <label>${Utils.esc(I18N.t('fldMode'))} *<input id="f-mode" list="dl-modes" placeholder="SSB" required></label>
+            <label>${Utils.esc(I18N.t('fldFreq'))}<input id="f-freq" placeholder="14.270"></label>
+            <label>${Utils.esc(I18N.t('fldRstS'))}<input id="f-rst-s" placeholder="599"></label>
+            <label>${Utils.esc(I18N.t('fldRstR'))}<input id="f-rst-r" placeholder="599"></label>
+            <label>${Utils.esc(I18N.t('fldGrid'))}<input id="f-grid" placeholder="OM89AA"></label>
             <label>IOTA<input id="f-iota" placeholder="AS-007"></label>
             <label>DXCC<input id="f-dxcc" placeholder="318"></label>
-            <label>国家/地区<input id="f-country" placeholder="China"></label>
-            <label>QSL 发出状态
+            <label>${Utils.esc(I18N.t('fldCountry'))}<input id="f-country" placeholder="China"></label>
+            <label>${Utils.esc(I18N.t('fldQslS'))}
               <select id="f-qsl-s">
-                <option value="">未标记</option>
-                <option value="N">N 未发</option>
-                <option value="Q">Q 排队中</option>
-                <option value="R">R 已请求</option>
-                <option value="Y">Y 已寄出</option>
-                <option value="S">S 已提交第三方</option>
-                <option value="M">M 卡片局</option>
-                <option value="I">I 忽略</option>
+                <option value="">${Utils.esc(I18N.t('qslNone'))}</option>
+                <option value="N">N ${Utils.esc(I18N.t('qslN'))}</option>
+                <option value="Q">Q ${Utils.esc(I18N.t('qslQ'))}</option>
+                <option value="R">R ${Utils.esc(I18N.t('qslR'))}</option>
+                <option value="Y">Y ${Utils.esc(I18N.t('qslY'))}</option>
+                <option value="S">S ${Utils.esc(I18N.t('qslS'))}</option>
+                <option value="M">M ${Utils.esc(I18N.t('qslM'))}</option>
+                <option value="I">I ${Utils.esc(I18N.t('qslI'))}</option>
               </select></label>
-            <label>寄出日期<input id="f-qsl-s-date" type="date"></label>
-            <label>QSL 收到状态
+            <label>${Utils.esc(I18N.t('fldQslSDate'))}<input id="f-qsl-s-date" type="date"></label>
+            <label>${Utils.esc(I18N.t('fldQslR'))}
               <select id="f-qsl-r">
-                <option value="">未标记</option>
-                <option value="N">N 未收</option>
-                <option value="R">R 已请求</option>
-                <option value="Y">Y 已收到</option>
-                <option value="I">I 忽略</option>
+                <option value="">${Utils.esc(I18N.t('qslNone'))}</option>
+                <option value="N">N ${Utils.esc(I18N.t('qslNRcvd'))}</option>
+                <option value="R">R ${Utils.esc(I18N.t('qslRRcvd'))}</option>
+                <option value="Y">Y ${Utils.esc(I18N.t('qslYRcvd'))}</option>
+                <option value="I">I ${Utils.esc(I18N.t('qslIRcvd'))}</option>
               </select></label>
-            <label>收到日期<input id="f-qsl-r-date" type="date"></label>
-            <label>QSL 途径<input id="f-qsl-via" placeholder="DIRECT / BURO"></label>
-            <label class="wide">QSL 附言<input id="f-qslmsg" placeholder="TNX QSO! 73"></label>
-            <label class="wide">备注<input id="f-comment"></label>
+            <label>${Utils.esc(I18N.t('fldQslRDate'))}<input id="f-qsl-r-date" type="date"></label>
+            <label>${Utils.esc(I18N.t('fldQslVia'))}<input id="f-qsl-via" placeholder="DIRECT / BURO"></label>
+            <label class="wide">${Utils.esc(I18N.t('fldQslMsg'))}<input id="f-qslmsg" placeholder="TNX QSO! 73"></label>
+            <label class="wide">${Utils.esc(I18N.t('fldComment'))}<input id="f-comment"></label>
           </div>
           <datalist id="dl-bands">${commonBands.split(',').map(b => `<option value="${b.trim()}">`).join('')}</datalist>
           <datalist id="dl-modes">${commonModes.split(',').map(m => `<option value="${m.trim()}">`).join('')}</datalist>
           <div class="entry-actions">
-            <button class="btn btn-primary" id="btn-save">💾 保存记录</button>
-            <button class="btn" id="btn-reset">清空</button>
-            <span class="entry-hint">保存到本机草稿；「一键提交」或「导出 ADIF」后写回仓库即正式入库</span>
+            <button class="btn btn-primary" id="btn-save">${Utils.esc(I18N.t('btnSave'))}</button>
+            <button class="btn" id="btn-reset">${Utils.esc(I18N.t('btnReset'))}</button>
+            <span class="entry-hint">${Utils.esc(I18N.t('entryHint'))}</span>
           </div>
           <div id="entry-msg" class="entry-msg"></div>
         </div>
@@ -74,59 +73,59 @@ const Entry = {
         <!-- 右：导入 / 导出 / 草稿 / 一键提交 -->
         <div class="entry-side">
           <div class="side-card">
-            <h3>📥 导入 ADIF</h3>
-            <p class="side-hint">从 WSJT-X / N1MM / Log4OM / LoTW / Clublog 等导出的 .adi 文件或文本，粘贴或选择文件导入。相同记录默认跳过，可勾选合并更新。</p>
-            <textarea id="import-text" rows="6" placeholder="在此粘贴 ADIF 文本…"></textarea>
+            <h3>${Utils.esc(I18N.t('importTitle'))}</h3>
+            <p class="side-hint">${Utils.esc(I18N.t('importHint'))}</p>
+            <textarea id="import-text" rows="6" placeholder="${Utils.esc(I18N.t('importPlaceholder'))}"></textarea>
             <div class="side-row">
-              <label class="checkbox"><input type="checkbox" id="import-merge"> 已存在记录用新值合并更新</label>
+              <label class="checkbox"><input type="checkbox" id="import-merge"> ${Utils.esc(I18N.t('importMerge'))}</label>
               <input type="file" id="import-file" accept=".adi,.txt,text/plain" class="file-input">
             </div>
             <div class="entry-actions">
-              <button class="btn" id="btn-import">导入</button>
+              <button class="btn" id="btn-import">${Utils.esc(I18N.t('btnImport'))}</button>
             </div>
             <div id="import-msg" class="entry-msg"></div>
           </div>
 
           <div class="side-card">
-            <h3>📤 导出 ADIF</h3>
-            <p class="side-hint">导出后 <b>提交到仓库</b>（git commit 或 GitHub 网页上传）即完成正式入库。推荐提交后点「清除本机草稿」。</p>
+            <h3>${Utils.esc(I18N.t('exportTitle'))}</h3>
+            <p class="side-hint">${Utils.esc(I18N.t('exportHint'))}</p>
             <div class="entry-actions">
-              <button class="btn" id="btn-export-all">下载完整日志</button>
-              <button class="btn" id="btn-export-local">下载本机草稿</button>
-              <button class="btn" id="btn-copy">复制 ADIF</button>
+              <button class="btn" id="btn-export-all">${Utils.esc(I18N.t('btnExportAll'))}</button>
+              <button class="btn" id="btn-export-local">${Utils.esc(I18N.t('btnExportLocal'))}</button>
+              <button class="btn" id="btn-copy">${Utils.esc(I18N.t('btnCopy'))}</button>
             </div>
           </div>
 
           <div class="side-card">
-            <h3>🗂 本机草稿</h3>
-            <p class="side-hint">尚未提交到仓库的本地修改（只存在于当前浏览器）。</p>
+            <h3>${Utils.esc(I18N.t('draftTitle'))}</h3>
+            <p class="side-hint">${Utils.esc(I18N.t('draftHint'))}</p>
             <div id="local-detail" class="local-detail"></div>
             <div class="entry-actions">
-              <button class="btn btn-danger" id="btn-clear-local">清除本机草稿</button>
+              <button class="btn btn-danger" id="btn-clear-local">${Utils.esc(I18N.t('btnClearDraft'))}</button>
             </div>
           </div>
 
           <div class="side-card">
-            <h3>🚀 一键提交到 GitHub</h3>
-            <p class="side-hint">把本机草稿和卡片图片直接写回仓库，一次提交、自动重新部署，无需手动 git。</p>
+            <h3>${Utils.esc(I18N.t('ghTitle'))}</h3>
+            <p class="side-hint">${Utils.esc(I18N.t('ghHint'))}</p>
             <div class="github-config">
-              <input id="gh-owner" placeholder="GitHub 用户名" autocomplete="off">
-              <input id="gh-repo" placeholder="仓库名（如 ham-qsl-log）" autocomplete="off">
-              <input id="gh-branch" placeholder="分支（默认 main）" autocomplete="off">
-              <input id="gh-token" type="password" placeholder="PAT 令牌（仅存于本浏览器）" autocomplete="off">
+              <input id="gh-owner" placeholder="${Utils.esc(I18N.t('ghOwner'))}" autocomplete="off">
+              <input id="gh-repo" placeholder="${Utils.esc(I18N.t('ghRepo'))}" autocomplete="off">
+              <input id="gh-branch" placeholder="${Utils.esc(I18N.t('ghBranch'))}" autocomplete="off">
+              <input id="gh-token" type="password" placeholder="${Utils.esc(I18N.t('ghToken'))}" autocomplete="off">
             </div>
             <div class="entry-actions">
-              <button class="btn" id="btn-gh-save">保存设置</button>
-              <button class="btn" id="btn-gh-test">测试连接</button>
-              <button class="btn btn-danger" id="btn-gh-clear">清除令牌</button>
+              <button class="btn" id="btn-gh-save">${Utils.esc(I18N.t('btnGhSave'))}</button>
+              <button class="btn" id="btn-gh-test">${Utils.esc(I18N.t('btnGhTest'))}</button>
+              <button class="btn btn-danger" id="btn-gh-clear">${Utils.esc(I18N.t('btnGhClear'))}</button>
             </div>
             <div id="gh-status" class="entry-msg"></div>
             <hr class="side-hr">
-            <p class="side-hint">选择要一并上传的 QSL 卡片图片（可多选）；数据文件 <code>data/log.adi</code> 会自动包含全部日志，图片文件名建议 <code>呼号_日期.jpg</code> 以便自动登记。</p>
+            <p class="side-hint">${Utils.esc(I18N.t('ghImagesHint'))}</p>
             <input type="file" id="gh-images" accept="image/*" multiple>
             <div id="gh-filelist" class="local-detail"></div>
             <div class="entry-actions">
-              <button class="btn btn-primary" id="btn-gh-push">⬆ 一键提交（0 个文件）</button>
+              <button class="btn btn-primary" id="btn-gh-push">${Utils.esc(I18N.t('btnPush', { n: 0 }))}</button>
             </div>
             <div id="gh-push-msg" class="entry-msg"></div>
           </div>
@@ -145,7 +144,7 @@ const Entry = {
     el.querySelector('#btn-export-local').onclick = () => this.download(Store.exportAdif(true), 'qsl-log-local.adi');
     el.querySelector('#btn-copy').onclick = () => this.copy();
     el.querySelector('#btn-clear-local').onclick = () => {
-      if (confirm('确认清除本机所有草稿？仓库数据不受影响，但未提交的修改会丢失。')) {
+      if (confirm(I18N.t('clearDraftConfirm'))) {
         Store.clearLocalChanges();
         App.refresh();
       }
@@ -156,10 +155,10 @@ const Entry = {
     el.querySelector('#btn-gh-save').onclick = () => this.saveGithubForm(el);
     el.querySelector('#btn-gh-test').onclick = () => this.testGithub(el);
     el.querySelector('#btn-gh-clear').onclick = () => {
-      if (confirm('确认清除本机保存的 GitHub 令牌与设置？')) {
+      if (confirm(I18N.t('ghClearConfirm'))) {
         GitHub.clearConfig();
         this.fillGithubForm(el);
-        this.msg('gh-status', '已清除令牌与设置', 'ok');
+        this.msg('gh-status', I18N.t('ghCleared'), 'ok');
       }
     };
     el.querySelector('#gh-images').onchange = () => this.onImagesSelected(el);
@@ -183,7 +182,7 @@ const Entry = {
     const band = g('f-band').toUpperCase();
     const mode = g('f-mode').toUpperCase();
     if (!call || !date || !band || !mode) {
-      this.msg('entry-msg', '呼号、日期、波段、模式为必填项', 'error');
+      this.msg('entry-msg', I18N.t('entryRequired'), 'error');
       return;
     }
     const time = g('f-time').replace(/:/g, '');
@@ -209,7 +208,7 @@ const Entry = {
       COMMENT: g('f-comment')
     };
     Store.upsert(rec);
-    this.msg('entry-msg', `已保存：${call} ${date} — 记录在「本机草稿」，可一键提交或导出`, 'ok');
+    this.msg('entry-msg', I18N.t('entrySaved', { call, date }), 'ok');
     this.editingId = null;
     this.resetForm();
     App.refresh();
@@ -230,13 +229,13 @@ const Entry = {
     set('f-qsl-r', rec.QSL_RCVD); set('f-qsl-r-date', toDate(rec.QSL_RCVD_DATE));
     set('f-qsl-via', rec.QSL_VIA); set('f-qslmsg', rec.QSLMSG); set('f-comment', rec.COMMENT);
     const title = document.getElementById('entry-title');
-    if (title) title.textContent = `编辑：${rec.CALL} ${ADIF.prettyDate(rec.QSO_DATE)}`;
+    if (title) title.textContent = I18N.t('entryEditTitle', { call: rec.CALL, date: ADIF.prettyDate(rec.QSO_DATE) });
   },
 
   resetForm() {
     if (this.editingId) {
       const title = document.getElementById('entry-title');
-      if (title) title.textContent = '新增通联记录';
+      if (title) title.textContent = I18N.t('entryTitle');
       this.editingId = null;
     }
     document.querySelectorAll('#page-entry .form-grid input:not([type=checkbox]), #page-entry .form-grid select').forEach(el => {
@@ -254,16 +253,16 @@ const Entry = {
   /* ------------------------------------------------------------ 导入 */
   doImport() {
     const text = document.getElementById('import-text').value;
-    if (!text.trim()) { this.msg('import-msg', '请先粘贴 ADIF 文本或选择文件', 'error'); return; }
+    if (!text.trim()) { this.msg('import-msg', I18N.t('importEmpty'), 'error'); return; }
     try {
       const parsed = ADIF.parse(text);
       const merge = document.getElementById('import-merge').checked;
-      if (parsed.records.length === 0) { this.msg('import-msg', '未解析到任何 QSO 记录，请检查格式', 'error'); return; }
+      if (parsed.records.length === 0) { this.msg('import-msg', I18N.t('importNone'), 'error'); return; }
       const result = Store.importRecords(parsed.records, merge);
-      this.msg('import-msg', `导入完成：新增 ${result.added} 条，更新 ${result.updated} 条，跳过重复 ${result.skipped} 条`, 'ok');
+      this.msg('import-msg', I18N.t('importResult', result), 'ok');
       App.refresh();
     } catch (e) {
-      this.msg('import-msg', '解析失败：' + e.message, 'error');
+      this.msg('import-msg', I18N.t('importError', { msg: e.message }), 'error');
     }
   },
 
@@ -281,9 +280,9 @@ const Entry = {
   async copy() {
     try {
       await navigator.clipboard.writeText(Store.exportAdif(false));
-      this.msg('entry-msg', 'ADIF 已复制到剪贴板', 'ok');
+      this.msg('entry-msg', I18N.t('copied'), 'ok');
     } catch (e) {
-      this.msg('entry-msg', '复制失败，请使用「下载」', 'error');
+      this.msg('entry-msg', I18N.t('copyFail'), 'error');
     }
   },
 
@@ -293,11 +292,11 @@ const Entry = {
     if (!el) return;
     const c = Store.localChangeCount();
     el.innerHTML = c.added + c.updated + c.deleted === 0
-      ? '<p class="side-hint">暂无未提交修改 ✓</p>'
+      ? '<p class="side-hint">' + Utils.esc(I18N.t('draftEmpty')) + '</p>'
       : `<ul>
-          <li>新增 ${c.added} 条</li>
-          <li>修改 ${c.updated} 条</li>
-          <li>删除 ${c.deleted} 条</li>
+          <li>${Utils.esc(I18N.t('draftAdded', { n: c.added }))}</li>
+          <li>${Utils.esc(I18N.t('draftUpdated', { n: c.updated }))}</li>
+          <li>${Utils.esc(I18N.t('draftDeleted', { n: c.deleted }))}</li>
         </ul>`;
   },
 
@@ -325,19 +324,19 @@ const Entry = {
       branch: el.querySelector('#gh-branch').value.trim() || 'main',
       token: el.querySelector('#gh-token').value.trim()
     };
-    if (!cfg.owner || !cfg.repo) { this.msg('gh-status', '用户名和仓库名必填', 'error'); return; }
-    if (!cfg.token) { this.msg('gh-status', '请填写 PAT 令牌', 'error'); return; }
+    if (!cfg.owner || !cfg.repo) { this.msg('gh-status', I18N.t('ghErrOwner'), 'error'); return; }
+    if (!cfg.token) { this.msg('gh-status', I18N.t('ghErrToken'), 'error'); return; }
     GitHub.saveConfig(cfg);
-    this.msg('gh-status', '设置已保存到本浏览器', 'ok');
+    this.msg('gh-status', I18N.t('ghSaved'), 'ok');
   },
 
   async testGithub(el) {
     try {
-      this.msg('gh-status', '正在测试连接…', '');
+      this.msg('gh-status', I18N.t('ghTesting'), '');
       const info = await GitHub.test();
-      this.msg('gh-status', '✅ ' + info, 'ok');
+      this.msg('gh-status', I18N.t('ghTestOk', { info }), 'ok');
     } catch (e) {
-      this.msg('gh-status', '❌ 连接失败：' + e.message, 'error');
+      this.msg('gh-status', I18N.t('ghTestFail', { msg: e.message }), 'error');
     }
   },
 
@@ -348,14 +347,14 @@ const Entry = {
     this.pendingImages = Array.from(input.files || []);
     if (this.pendingImages.length === 0) {
       list.innerHTML = '';
-      btn.textContent = '⬆ 一键提交（0 个文件）';
+      btn.textContent = I18N.t('btnPush', { n: 0 });
       return;
     }
     list.innerHTML = `<ul>${this.pendingImages.map(f =>
-      `<li>🖼 ${Utils.esc(f.name)}（${(f.size / 1024).toFixed(0)} KB）</li>`).join('')}</ul>`;
+      `<li>${Utils.esc(I18N.t('ghImageItem', { name: f.name, size: (f.size / 1024).toFixed(0) }))}</li>`).join('')}</ul>`;
     const changes = Store.localChangeCount();
     const total = this.pendingImages.length + (changes.added + changes.updated + changes.deleted > 0 ? 1 : 0);
-    btn.textContent = `⬆ 一键提交（${total} 个文件）`;
+    btn.textContent = I18N.t('btnPush', { n: total });
   },
 
   async doPush(el) {
@@ -391,32 +390,32 @@ const Entry = {
       }
 
       if (files.length <= 1) {
-        this.msg('gh-push-msg', '没有要提交的内容（无草稿、无图片）', 'error');
+        this.msg('gh-push-msg', I18N.t('ghNothing'), 'error');
         return;
       }
 
       // 统计信息
       const recordsCount = Store.localChangeCount();
       const summary = [];
-      summary.push(`日志更新（草稿 新增${recordsCount.added}/修改${recordsCount.updated}/删除${recordsCount.deleted}）`);
-      if (images.length) summary.push(`卡片图片 ${images.length} 张`);
-      if (manifestChanged) summary.push('manifest 更新');
+      summary.push(`log (drafts: +${recordsCount.added}/~${recordsCount.updated}/-${recordsCount.deleted})`);
+      if (images.length) summary.push(`${images.length} card image(s)`);
+      if (manifestChanged) summary.push('manifest');
 
       btn.disabled = true;
-      btn.textContent = '⏳ 正在提交…';
-      this.msg('gh-push-msg', '正在写入仓库（需 5-15 秒）…', '');
+      btn.textContent = I18N.t('btnPushing');
+      this.msg('gh-push-msg', I18N.t('ghPushing'), '');
 
-      const result = await GitHub.pushFiles(files, '网页一键提交：' + summary.join('、'));
-      this.msg('gh-push-msg', `✅ 提交成功（${result.commitSha.slice(0, 7)}）。GitHub Actions 正在重新部署，1-2 分钟后生效。`, 'ok');
+      const result = await GitHub.pushFiles(files, 'Web push: ' + summary.join(', '));
+      this.msg('gh-push-msg', I18N.t('ghPushOk', { sha: result.commitSha.slice(0, 7) }), 'ok');
       this.pendingImages = [];
       el.querySelector('#gh-images').value = '';
       el.querySelector('#gh-filelist').innerHTML = '';
-      btn.textContent = '⬆ 一键提交（0 个文件）';
+      btn.textContent = I18N.t('btnPush', { n: 0 });
       // 数据已入库，清除草稿
       Store.clearLocalChanges();
       App.refresh();
     } catch (e) {
-      this.msg('gh-push-msg', '❌ 提交失败：' + e.message, 'error');
+      this.msg('gh-push-msg', I18N.t('ghPushFail', { msg: e.message }), 'error');
     } finally {
       btn.disabled = false;
     }

@@ -1,7 +1,7 @@
 /* ============================================================================
  * stats.js — 统计页（总览卡片 + ECharts 图表）
  * 骨架 DOM 只构建一次；每次切到本页仅更新数据并 resize（避免隐藏容器 0 尺寸 / 实例堆积）
- * 依赖: adif.js, store.js, app.js, vendor/echarts.min.js
+ * 依赖: i18n.js, adif.js, store.js, app.js, vendor/echarts.min.js
  * 注册到 App.tabs.stats
  * ==========================================================================*/
 'use strict';
@@ -14,22 +14,22 @@ App.tabs.stats = (() => {
     const el = document.getElementById('page-stats');
     el.innerHTML = `
       <div class="stat-cards">
-        <div class="stat-card"><div class="stat-num" data-stat="total">0</div><div class="stat-label">总通联 QSO</div></div>
-        <div class="stat-card"><div class="stat-num" data-stat="dxcc">0</div><div class="stat-label">DXCC 实体</div></div>
-        <div class="stat-card"><div class="stat-num" data-stat="countries">0</div><div class="stat-label">国家/地区</div></div>
-        <div class="stat-card"><div class="stat-num" data-stat="confirmed">0</div><div class="stat-label">已确认（QSL/LoTW）</div></div>
-        <div class="stat-card"><div class="stat-num" data-stat="sent">0</div><div class="stat-label">QSL 已寄出</div></div>
-        <div class="stat-card"><div class="stat-num" data-stat="rcvd">0</div><div class="stat-label">QSL 已收到</div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="total">0</div><div class="stat-label" data-i18n="statTotal"></div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="dxcc">0</div><div class="stat-label" data-i18n="statDxcc"></div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="countries">0</div><div class="stat-label" data-i18n="statCountries"></div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="confirmed">0</div><div class="stat-label" data-i18n="statConfirmed"></div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="sent">0</div><div class="stat-label" data-i18n="statSent"></div></div>
+        <div class="stat-card"><div class="stat-num" data-stat="rcvd">0</div><div class="stat-label" data-i18n="statRcvd"></div></div>
       </div>
       <div class="chart-grid">
-        <div class="chart-box"><h3>按波段分布</h3><div id="chart-band" class="chart"></div></div>
-        <div class="chart-box"><h3>按模式分布</h3><div id="chart-mode" class="chart"></div></div>
-        <div class="chart-box wide"><h3>每月通联数</h3><div id="chart-month" class="chart"></div></div>
-        <div class="chart-box wide"><h3>按年份通联数</h3><div id="chart-year" class="chart"></div></div>
+        <div class="chart-box"><h3 data-i18n="chartBand"></h3><div id="chart-band" class="chart"></div></div>
+        <div class="chart-box"><h3 data-i18n="chartMode"></h3><div id="chart-mode" class="chart"></div></div>
+        <div class="chart-box wide"><h3 data-i18n="chartMonth"></h3><div id="chart-month" class="chart"></div></div>
+        <div class="chart-box wide"><h3 data-i18n="chartYear"></h3><div id="chart-year" class="chart"></div></div>
       </div>`;
 
     if (typeof echarts === 'undefined') {
-      el.querySelectorAll('.chart').forEach(c => { c.innerHTML = '<p class="empty">图表库未加载</p>'; });
+      el.querySelectorAll('.chart').forEach(c => { c.innerHTML = '<p class="empty">' + I18N.t('chartLoadFail') + '</p>'; });
       return false;
     }
     const theme = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4a9eff';
@@ -50,6 +50,7 @@ App.tabs.stats = (() => {
     charts.theme = theme;
     charts.axisColor = axisColor;
     window.addEventListener('resize', () => resizeAll());
+    I18N.applyStatic(); // 填充骨架内的 data-i18n 文本
     return true;
   }
 
