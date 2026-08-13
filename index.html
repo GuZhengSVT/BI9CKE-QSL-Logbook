@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="业余无线电通联日志与 QSL 卡片交换记录">
+  <title>业余无线电通联日志 · QSL Logbook</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="site-title">
+        <span class="logo">📻</span>
+        <div>
+          <h1 id="site-name">业余无线电 QSL Logbook</h1>
+          <p id="site-sub" class="site-sub">通联日志 · QSL 卡片交换记录</p>
+        </div>
+      </div>
+      <span id="local-badge" class="local-badge"></span>
+    </div>
+  </header>
+
+  <nav class="nav-bar">
+    <button class="nav-item" data-tab="log">📖 通联日志</button>
+    <button class="nav-item" data-tab="stats">📊 统计</button>
+    <button class="nav-item" data-tab="qsl">💌 QSL 管理</button>
+    <button class="nav-item" data-tab="entry">✍️ 录入 / 导入</button>
+    <button class="nav-item" data-tab="cards">🖼 QSL 卡片</button>
+  </nav>
+
+  <main>
+    <!-- 通联日志 -->
+    <section id="page-log" class="tab-page">
+      <div id="log-filters" class="filter-bar"></div>
+      <div class="table-wrap">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>日期</th><th>呼号</th><th>波段</th><th>模式</th>
+              <th>RST 发/收</th><th>网格</th><th>QSL 发出</th><th>QSL 收到</th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+      <div id="log-pager" class="pager"></div>
+    </section>
+
+    <!-- 统计 -->
+    <section id="page-stats" class="tab-page"></section>
+
+    <!-- QSL 管理 -->
+    <section id="page-qsl" class="tab-page"></section>
+
+    <!-- 录入 / 导入 -->
+    <section id="page-entry" class="tab-page"></section>
+
+    <!-- QSL 卡片 -->
+    <section id="page-cards" class="tab-page"></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>纯静态站点 · 数据以 <code>data/log.adi</code>（ADIF 标准）为权威源 · 本机草稿仅存于当前浏览器</p>
+  </footer>
+
+  <!-- 第三方库（本地化，无 CDN 依赖，国内访问友好） -->
+  <script src="vendor/echarts.min.js"></script>
+  <!-- 应用模块 -->
+  <script src="js/adif.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/qsl.js"></script>
+  <script src="js/entry.js"></script>
+  <script src="js/cards.js"></script>
+  <script>
+    // 启动：设置站点标题 → 初始化应用
+    Store.loadConfig().then(cfg => {
+      if (cfg.call) {
+        document.title = cfg.call + ' 的通联日志 · QSL Logbook';
+        document.getElementById('site-name').textContent = cfg.call + ' · QSL Logbook';
+        document.getElementById('site-sub').textContent =
+          (cfg.name || '业余无线电') + ' · 通联日志 / QSL 卡片交换';
+      }
+    }).then(() => App.init()).catch(err => {
+      console.error(err);
+      document.getElementById('log-body').innerHTML =
+        '<tr><td colspan="8" class="empty">初始化失败：' + Utils.esc(err.message) +
+        '。请通过本地 HTTP 服务访问（如 python3 -m http.server），不要直接双击打开文件。</td></tr>';
+    });
+  </script>
+</body>
+</html>
