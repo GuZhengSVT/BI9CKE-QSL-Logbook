@@ -328,6 +328,18 @@ input[type="date"], input[type="time"] { color-scheme: dark; }
 .local-detail ul { list-style: none; padding: 0; }
 .local-detail li { color: var(--text); font-size: 13.5px; padding: 2px 0; }
 
+/* GitHub 一键提交卡片 */
+.github-config input {
+  width: 100%;
+  margin-bottom: 8px;
+}
+.side-hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 14px 0;
+}
+#gh-images { margin: 4px 0 10px; font-size: 12.5px; max-width: 100%; }
+
 /* ---------------------------------------------------------------- 卡片页 */
 .cards-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
 .cards-toolbar input { flex: 0 1 240px; }

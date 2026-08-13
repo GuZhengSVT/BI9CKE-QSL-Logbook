@@ -100,6 +100,34 @@ python3 -m http.server 8000
 
 > 💡 更顺滑的替代流程：日常在本地日志软件（WSJT-X、Log4OM 等）记 QSO，定期导出 ADIF 上传到网页导入，QSL 收发状态在网页上管理即可。
 
+## 🚀 网页一键提交到 GitHub（免手动 git）
+
+录入页右侧有「一键提交到 GitHub」卡片：点一次按钮，把**本机草稿数据 + 卡片图片**原子写入仓库（一次 commit），GitHub Actions 自动重新部署。无需安装 git、无需本地环境。
+
+### 第一步：创建 PAT 令牌（只需一次）
+
+1. GitHub → 右上角头像 → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**
+2. **Repository access**：选 *Only select repositories* → 勾选你的日志仓库
+3. **Permissions → Contents**：选 **Read and write**（其余权限保持 None）
+4. 有效期自选，点 Generate token，**立即复制**（只显示一次）
+
+> 🔒 安全说明：令牌只保存在**当前浏览器**的 localStorage 中，请求仅直连 `api.github.com`，不经过任何第三方；建议用 fine-grained token 限定到这一个仓库。不放心可随时点「清除令牌」。
+
+### 第二步：在网页填写并测试
+
+1. 打开录入页 → 「一键提交到 GitHub」卡片
+2. 填写：GitHub 用户名、仓库名、分支（默认 main）、PAT 令牌
+3. 点「保存设置」→「测试连接」，显示 `连接成功：xxx/xxx` 即 OK
+
+### 第三步：日常提交
+
+1. 网页上录入/导入/标记 QSL 状态后（此时在本机草稿）
+2. （可选）在图片选择框选要上传的卡片图，支持多选；文件名建议 `呼号_日期.jpg`，会自动登记到 manifest
+3. 点 **「⬆ 一键提交」** → 等待数秒 → 显示提交成功
+4. GitHub Actions 自动重新部署，1-2 分钟后网站更新；草稿自动清除
+
+> 提交内容：`data/log.adi`（完整日志，始终包含）+ 新选的卡片图片 + 自动更新的 `qsl-cards/manifest.json`。全部合并在**一次提交**里，只触发一次部署。
+
 ## 🖼 添加 QSL 卡片图片
 
 1. 把卡片扫描图放进 `qsl-cards/` 目录（建议命名 `呼号_日期.jpg`）。
