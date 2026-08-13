@@ -57,17 +57,22 @@ python3 -m http.server 8000
 
 ### 2. 部署到 GitHub Pages（免费、免备案）
 
-1. 在 GitHub 新建**公开仓库**（如 `ham-qsl-log`），把本项目所有文件推上去：
+本项目已部署在公开仓库 **`GuZhengSVT/BI9CKE-QSL-Logbook`**，站点地址：
+`https://GuZhengSVT.github.io/BI9CKE-QSL-Logbook/`
+
+若需自行搭建（或迁移到新仓库），步骤如下：
+
+1. 在 GitHub 新建**公开仓库**，把本项目所有文件推上去：
    ```bash
    git init
    git add .
    git commit -m "init"
-   git remote add origin https://github.com/<你的用户名>/ham-qsl-log.git
+   git remote add origin https://github.com/<你的用户名>/<仓库名>.git
    git push -u origin main
    ```
 2. 仓库页面 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
 3. push 后 Actions 自动构建部署，站点地址为：
-   `https://<你的用户名>.github.io/ham-qsl-log/`
+   `https://<你的用户名>.github.io/<仓库名>/`
 4. 以后每次 push 自动更新。也可以在 Actions 页面手动 **Run workflow** 重新部署。
 
 ### 3. 绑定自定义域名（可选）
@@ -147,8 +152,8 @@ python3 -m http.server 8000
 
 ```json
 {
-  "call": "BG1ABC",              // 你的呼号，显示在站点标题
-  "name": "BG1ABC 的业余无线电日志",
+  "call": "BI9CKE",              // 你的呼号，显示在站点标题
+  "name": "BI9CKE 的业余无线电日志",
   "commonBands": ["160M", "80M", "40M", "20M", "15M", "10M", "6M", "2M", "70CM"],
   "commonModes": ["SSB", "CW", "FT8", "FM", "AM", "RTTY", "PSK31"]
 }

@@ -1,6 +1,6 @@
 {
-  "call": "BG1ABC",
-  "name": "BG1ABC 的业余无线电日志",
+  "call": "BI9CKE",
+  "name": "BI9CKE 的业余无线电日志",
   "commonBands": ["160M", "80M", "60M", "40M", "30M", "20M", "17M", "15M", "12M", "10M", "6M", "2M", "70CM"],
   "commonModes": ["SSB", "CW", "FT8", "FT4", "FM", "AM", "RTTY", "PSK31", "DSTAR", "C4FM"]
 }
