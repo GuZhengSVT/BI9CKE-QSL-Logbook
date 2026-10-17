@@ -1,7 +1,7 @@
 /* Public, read-only data. Browser drafts never appear on the public site. */
 'use strict';
 const Store = (() => {
-  const FIELDS = ['CALL','QSO_DATE','TIME_ON','BAND','MODE','SUBMODE','FREQ','RST_SENT','RST_RCVD','GRIDSQUARE','LAT','LON','DXCC','COUNTRY','QSL_SENT','QSL_RCVD','LOTW_QSL_RCVD'];
+  const FIELDS = ['CALL','QSO_DATE','TIME_ON','BAND','MODE','SUBMODE','FREQ','RST_SENT','RST_RCVD','GRIDSQUARE','LAT','LON','DXCC','COUNTRY','QSL_SENT','QSL_RCVD','LOTW_QSL_RCVD','SAT_NAME','PROP_MODE'];
   let snapshot, bootstrap, fallback = false;
   const publicRecord = record => Object.fromEntries(FIELDS.filter(key => record[key] != null).map(key => [key, record[key]]));
   async function load() {

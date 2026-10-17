@@ -27,6 +27,11 @@ const QslGeo = (() => {
     const number = match ? (Number(match[2]) + Number(match[3]) / 60) * ('SW'.includes(match[1]) ? -1 : 1) : /^[-+]?\d+(?:\.\d+)?$/.test(str) ? Number(str) : NaN;
     return Number.isFinite(number) && Math.abs(number) <= (latitude ? 90 : 180) ? number : null;
   }
+  function gridAt(point) {
+    const lat=coordinate(point?.lat,true),lon=coordinate(point?.lon,false);if(lat===null||lon===null)return null;
+    const x=Math.min(lon+180,360-1e-9),y=Math.min(lat+90,180-1e-9),letter=n=>String.fromCharCode(65+n);
+    return letter(Math.floor(x/20))+letter(Math.floor(y/10))+Math.floor(x%20/2)+Math.floor(y%10)+letter(Math.floor((x%2)*12))+letter(Math.floor((y%1)*24));
+  }
   function location(value = {}) {
     const lat = coordinate(value.lat ?? value.LAT, true), lon = coordinate(value.lon ?? value.LON, false);
     if (lat !== null && lon !== null) return { lat, lon, source: 'coordinates' };
@@ -65,6 +70,6 @@ const QslGeo = (() => {
     const farthest = contacts.reduce((best, item) => !best || item.km > best.km ? item : best, null);
     return { center, contacts, farthest };
   }
-  return { gridCenter, coordinate, location, distance, bearing, destination, azimuthal, coverage };
+  return { gridCenter, gridAt, coordinate, location, distance, bearing, destination, azimuthal, coverage };
 })();
 globalThis.QslGeo = QslGeo;

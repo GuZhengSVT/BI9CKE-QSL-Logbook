@@ -6,7 +6,7 @@ const QslInsights = (() => {
   const pending = r => ['R','Q'].includes(r.QSL_SENT);
   function filter(records,f={}) {
     const query=String(f.query||'').trim().toLowerCase();
-    return records.filter(r => (!query || [r.CALL,r.COUNTRY,r.GRIDSQUARE].some(v=>String(v||'').toLowerCase().includes(query))) &&
+    return records.filter(r => (!query || [r.CALL,r.COUNTRY,r.GRIDSQUARE,r.SAT_NAME].some(v=>String(v||'').toLowerCase().includes(query))) &&
       (!f.band || r.BAND===f.band) && (!f.mode || r.MODE===f.mode) &&
       (!f.from || r.QSO_DATE>=f.from.replaceAll('-','')) && (!f.to || r.QSO_DATE<=f.to.replaceAll('-','')) &&
       (!f.qsl || (f.qsl==='pending'?pending(r):f.qsl==='confirmed'?confirmed(r):f.qsl==='unconfirmed'?!confirmed(r):true)));

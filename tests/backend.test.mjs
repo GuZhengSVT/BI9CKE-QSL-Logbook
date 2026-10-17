@@ -36,7 +36,7 @@ test('Session authentication, D1 persistence and public/admin separation',async 
     assert.equal((await request('/api/admin/settings',{method:'PUT',admin:true,body:{...input,station:{lat:91,lon:1}}})).status,400);
     assert.equal((await request('/api/admin/settings',{method:'PUT',admin:true,body:{...input,station:{grid:'',lat:'',lon:''}}})).status,200);
   });
-  const record={CALL:'TEST01',QSO_DATE:'20261018',TIME_ON:'123000',BAND:'20M',MODE:'CW',GRIDSQUARE:'PM95',COMMENT:'private note',QSLMSG:'private card message'};
+  const record={CALL:'TEST01',QSO_DATE:'20261018',TIME_ON:'123000',BAND:'20M',MODE:'CW',GRIDSQUARE:'PM95',SAT_NAME:'ISS',PROP_MODE:'SAT',COMMENT:'private note',QSLMSG:'private card message'};
   await t.test('create, edit identity, duplicate protection and public redaction',async()=>{
     const saved=await request('/api/admin/records',{method:'POST',admin:true,body:{record}});assert.equal(saved.status,200);
     const {id}=await saved.json();
@@ -45,6 +45,7 @@ test('Session authentication, D1 persistence and public/admin separation',async 
     assert.equal((await request('/api/admin/records',{method:'POST',admin:true,body:{record:next,originalId:id}})).status,200);
     const publicData=await(await request('/api/public')).json();assert.equal(publicData.records.length,8);assert(!publicData.records.some(r=>r.CALL==='TEST01'));
     assert.equal(publicData.records.find(r=>r.CALL==='TEST02').QSL_RCVD,'Y');assert(!publicData.records.find(r=>r.CALL==='TEST02').COMMENT);
+    assert.equal(publicData.records.find(r=>r.CALL==='TEST02').SAT_NAME,'ISS');assert.equal(publicData.records.find(r=>r.CALL==='TEST02').PROP_MODE,'SAT');
     const adminData=await(await request('/api/admin/snapshot',{admin:true})).json();assert.equal(adminData.records.find(r=>r.CALL==='TEST02').COMMENT,'private note');
   });
   await t.test('import is validated before committing and exports preserve ADIF fields',async()=>{

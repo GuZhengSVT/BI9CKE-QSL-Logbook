@@ -95,20 +95,21 @@ const App = {
     if (history.replaceState) history.replaceState(null, '', '#' + name);
     const fn = this.tabs[name];
     if (fn) fn();
+    this.satelliteTools?.setActive(name==='satellites');
     window.scrollTo(0, 0);
   },
 
   updatePageHeading() {
     const name = this.state.activeTab;
-    const key = { log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[name];
+    const key = { log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[name];
     document.getElementById('page-title').textContent = I18N.t(key);
     document.getElementById('current-page').textContent = I18N.t(key);
     document.getElementById('page-description').textContent = I18N.t(name + 'Description');
     document.querySelectorAll('.nav-item').forEach(el => {
-      el.setAttribute('title', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[el.dataset.tab]));
+      el.setAttribute('title', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[el.dataset.tab]));
     });
     document.querySelectorAll('.tab-page').forEach(el => {
-      el.setAttribute('aria-label', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[el.id.slice(5)]));
+      el.setAttribute('aria-label', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[el.id.slice(5)]));
     });
   },
 
@@ -195,6 +196,7 @@ const App = {
         (r.COMMENT || '').toLowerCase().includes(q) ||
         (r.COUNTRY || '').toLowerCase().includes(q) ||
         (r.GRIDSQUARE || '').toLowerCase().includes(q)
+        || (r.SAT_NAME || '').toLowerCase().includes(q)
       );
     }
     if (f.band) list = list.filter(r => r.BAND === f.band);
@@ -300,6 +302,8 @@ const App = {
       [I18N.t('fldTime'), ADIF.prettyTime(rec.TIME_ON)],
       [I18N.t('fldBand'), rec.BAND],
       [I18N.t('fldMode'), rec.MODE],
+      [I18N.t('satelliteName'),rec.SAT_NAME],
+      [I18N.t('propagationMode'),rec.PROP_MODE],
       [I18N.t('fldFreq'), rec.FREQ],
       [I18N.t('fldRstS'), rec.RST_SENT],
       [I18N.t('fldRstR'), rec.RST_RCVD],
@@ -328,3 +332,8 @@ window.App = App;
 window.Utils = Utils;
 
 App.tabs.log = () => App.log();
+App.tabs.satellites=()=>{
+  const el=document.getElementById('page-satellites');if(!el.classList.contains('active'))return;
+  if(!App.satelliteTools)App.satelliteTools=QslSat.mount(el,{apiBaseUrl:App.state.config.apiBaseUrl,station:App.state.config.station,language:I18N.getLang()});
+  else App.satelliteTools.setLanguage(I18N.getLang());
+};

@@ -38,3 +38,9 @@ test('azimuthal map keeps every distance ring circular and touches the farthest 
     assert(Math.abs(Math.hypot(p.x-360,p.y-180)-km/(Math.PI*6371.0088)*164)<1e-8);
   }
 });
+
+test('Subsatellite coordinates convert to six-character Maidenhead grids',()=>{
+  for(const grid of ['OM89AA','PM95AA','QF22MH','AA00AA','RR99XX'])assert.equal(QslGeo.gridAt(QslGeo.gridCenter(grid)),grid);
+  assert.equal(QslGeo.gridAt({lat:91,lon:0}),null);
+  assert.match(QslGeo.gridAt({lat:90,lon:180}),/^[A-R]{2}\d{2}[A-X]{2}$/);
+});

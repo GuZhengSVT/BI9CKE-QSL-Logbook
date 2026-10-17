@@ -4,6 +4,7 @@ const Admin = {
   fields: [
     ['CALL','对方呼号 *','text',true],['QSO_DATE','日期 / UTC *','date',true],['TIME_ON','时间 / UTC','time'],
     ['BAND','波段 *','text',true],['MODE','模式 *','text',true],['FREQ','频率 / MHz','text'],
+    ['SAT_NAME','卫星名称','text'],['PROP_MODE','传播方式（卫星填 SAT）','text'],
     ['RST_SENT','RST 发出','text'],['RST_RCVD','RST 收到','text'],['GRIDSQUARE','对方网格','text'],
     ['COUNTRY','国家 / 地区','text'],['DXCC','DXCC 实体编号','text'],['LAT','对方纬度','text'],['LON','对方经度','text'],
     ['QSL_SENT','QSL 发出','sent'],['QSL_RCVD','QSL 收到','received'],['QSL_SENT_DATE','寄出日期','date'],['QSL_RCVD_DATE','收到日期','date'],
@@ -21,14 +22,19 @@ const Admin = {
     const element=document.getElementById('admin-message'); element.hidden=false; element.textContent=text; element.classList.toggle('error',error);
   },
   tab(name) {
-    const labels={dashboard:['电台仪表盘','每一次呼叫，都让世界更近一点。'],qsl:['QSL 管理','整理待寄卡片，记录来自远方的确认。'],records:['通联记录','组合筛选与导出，快速找到每一次通联。'],entry:['新增通联','记录每一次相遇，保存后更新展示页。'],import:['导入 / 导出','导入标准 ADIF，或下载完整数据备份。'],settings:['电台设置','设置呼号，以及地图上代表本台的位置。']};
+    const labels={dashboard:['电台仪表盘','每一次呼叫，都让世界更近一点。'],satellites:['卫星工具','追踪轨道，等待下一次来自太空的回应。'],qsl:['QSL 管理','整理待寄卡片，记录来自远方的确认。'],records:['通联记录','组合筛选与导出，快速找到每一次通联。'],entry:['新增通联','记录每一次相遇，保存后更新展示页。'],import:['导入 / 导出','导入标准 ADIF，或下载完整数据备份。'],settings:['电台设置','设置呼号，以及地图上代表本台的位置。']};
     document.querySelectorAll('.admin-section').forEach(el=>el.classList.toggle('active',el.id==='admin-'+name));
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.adminTab===name));
     document.getElementById('admin-title').textContent=labels[name][0];document.getElementById('admin-current').textContent=labels[name][0];document.getElementById('admin-description').textContent=labels[name][1];
+    if(name==='satellites'&&!this.satelliteTools)this.satelliteTools=QslSat.mount(document.getElementById('admin-satellites'),{apiBaseUrl:location.origin,station:this.config.station,onLog: name=>{
+      this.resetForm();this.tab('entry');const form=document.getElementById('record-form');form.elements.SAT_NAME.value=name;form.elements.PROP_MODE.value='SAT';document.getElementById('entry-now').click();form.elements.CALL.focus();
+    }});
+    this.satelliteTools?.setActive(name==='satellites');
     window.scrollTo(0,0);
   },
   async refresh() {
     const data=await this.api('snapshot');this.records=data.records;this.config=data.config;
+    this.satelliteTools?.setStation(this.config.station);
     document.getElementById('admin-user').textContent=data.user.username;
     this.populateFilters();this.renderRecords();this.fillSettings();this.renderDashboard();this.renderQsl();
   },

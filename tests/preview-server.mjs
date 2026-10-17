@@ -6,6 +6,7 @@ import {resolve,extname} from 'node:path';
 import worker from '../worker/src/index.mjs';
 import {database} from './helpers.mjs';
 import {digest} from '../worker/src/auth.mjs';
+import {parseTles} from '../js/tle.mjs';
 const db=database(),base='http://localhost:8002';
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.json':'application/json','.adi':'text/plain'};
 async function asset(directory,path) {
@@ -23,7 +24,8 @@ createServer(async(req,res)=>{
     else if(path==='/data/config.json') {
       const cfg=JSON.parse(await readFile('dist/public/data/config.json','utf8'));cfg.apiBaseUrl=base;
       response=Response.json(cfg,{headers:{'Cache-Control':'no-store'}});
-    } else if(path==='/js/insights.js') response=await asset('dist/backend',path);
+    } else if(path==='/api/satellites'&&process.env.QSL_TLE_FIXTURE) response=Response.json({source:'AMSAT (local test snapshot)',fetchedAt:new Date().toISOString(),satellites:parseTles(await readFile(process.env.QSL_TLE_FIXTURE,'utf8'))});
+    else if(path==='/js/insights.js') response=await asset('dist/backend',path);
     else if(path.startsWith('/api/') || path.startsWith('/admin/')) {
       const chunks=[];for await(const chunk of req)chunks.push(chunk);
       const request=new Request(new URL(req.url,base),{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})});

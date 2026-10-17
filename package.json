@@ -15,6 +15,10 @@
     "deploy:backend": "npm run build && wrangler deploy --config worker/wrangler.jsonc"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "wrangler": "4.151.1"
+  },
+  "dependencies": {
+    "satellite.js": "6.0.2"
   }
 }

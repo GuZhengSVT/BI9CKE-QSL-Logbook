@@ -12,6 +12,7 @@ const I18N = (() => {
   const messages = {
     /* ============================================================ 中文 */
     'zh-CN': {
+      navSatellites:'卫星工具',satellitesDescription:'追踪轨道，等待下一次来自太空的回应。',satelliteName:'卫星名称',propagationMode:'传播方式',
     themeSystem:'跟随系统',themeLight:'浅色模式',themeDark:'深色模式',
       mapLoadFailed: '地图暂时无法加载。', adminLogin: '电台管理', liveUnavailable: '实时日志暂不可用，当前展示仓库中的静态副本。',
       mapNeedsStation: '电台位置暂未公开。',
@@ -50,7 +51,7 @@ const I18N = (() => {
       localBadge: '本机草稿 {n} 条未提交',
       footer: '以电波相识，以卡片为念。',
 
-      filterSearch: '搜索呼号 / 国家 / 网格…',
+      filterSearch: '搜索呼号 / 国家 / 网格 / 卫星…',
       allBands: '全部波段', allModes: '全部模式', allYears: '全部年份', allCountries: '全部国家',
       filterCount: '共 {n} 条',
 
@@ -154,6 +155,7 @@ const I18N = (() => {
 
     /* ============================================================ English */
     'en': {
+      navSatellites:'Satellite tools',satellitesDescription:'Follow the orbit. Plan your next contact through space.',satelliteName:'Satellite',propagationMode:'Propagation mode',
       themeSystem:'System theme',themeLight:'Light mode',themeDark:'Dark mode',
       mapLoadFailed: 'Map temporarily unavailable.', adminLogin: 'Station admin', liveUnavailable: 'Live data is unavailable. Showing the repository snapshot.',
       mapNeedsStation: 'Station location has not been published.',
@@ -192,7 +194,7 @@ const I18N = (() => {
       localBadge: '{n} local change(s) pending',
       footer: 'Connected by radio. Remembered in cards.',
 
-      filterSearch: 'Search callsign / country / grid…',
+      filterSearch: 'Search callsign / country / grid / satellite…',
       allBands: 'All Bands', allModes: 'All Modes', allYears: 'All Years', allCountries: 'All Countries',
       filterCount: '{n} records',
 

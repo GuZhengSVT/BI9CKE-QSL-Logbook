@@ -9,6 +9,7 @@
   <title>业余无线电通联日志 · QSL Logbook</title>
   <link rel="stylesheet" href="css/style.css?v=5">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/satellites.css">
 </head>
 <body>
   <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -34,6 +35,7 @@
       <a class="nav-item" data-tab="log" href="#log"><svg class="icon" aria-hidden="true"><use href="#i-log"/></svg><span data-i18n="navLog">通联日志</span><span id="nav-log-count" class="nav-count">0</span></a>
       <a class="nav-item" data-tab="stats" href="#stats"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="navStats">数据统计</span></a>
       <a class="nav-item" data-tab="cards" href="#cards"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><span data-i18n="navCards">卡片收藏</span></a>
+      <a class="nav-item" data-tab="satellites" href="#satellites"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span data-i18n="navSatellites">卫星工具</span></a>
     </nav>
     <div class="sidebar-note"><div class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><p data-i18n="radioQuote">让电波跨越山海。</p><span>CQ CQ CQ · 73</span></div>
     <div class="station-profile"><span class="station-avatar"><svg class="icon" aria-hidden="true"><use href="#i-radio"/></svg></span><div><strong id="station-call">QSL</strong><small data-i18n="stationLabel">业余无线电台</small></div><span class="profile-dot" title="Local logbook"></span></div>
@@ -66,10 +68,11 @@
         <div class="log-bottom-note"><span><span class="tiny-dot"></span><span data-i18n="localPrivacy">你的每一次通联，都值得被珍藏。</span></span><span>ADIF 3.1.4 <span class="note-separator">/</span> 73 &amp; GOOD DX</span></div>
       </section>
       <section id="page-stats" class="tab-page" aria-label="数据统计"></section>
-      <section id="page-cards" class="tab-page" aria-label="QSL 卡片"></section>
+      <section id="page-satellites" class="tab-page" aria-label="卫星工具"></section><section id="page-cards" class="tab-page" aria-label="QSL 卡片"></section>
     </main>
     <footer class="site-footer"><span id="site-sub">业余无线电通联日志</span><span data-i18n="footer">以电波相识，以卡片为念。</span></footer>
   </div>
+  <script src="js/satellite-tools.js"></script>
   <script src="vendor/echarts.min.js"></script>
   <script src="js/i18n.js"></script><script src="js/adif.js"></script><script src="js/geo.js"></script><script src="js/store.js"></script><script src="js/app.js"></script><script src="js/map.js"></script><script src="js/stats.js"></script><script src="js/cards.js"></script>
   <script>
