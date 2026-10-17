@@ -32,14 +32,15 @@ App.tabs.stats = (() => {
       el.querySelectorAll('.chart').forEach(c => { c.innerHTML = '<p class="empty">' + I18N.t('chartLoadFail') + '</p>'; });
       return true;
     }
-    const theme = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4a9eff';
-    const axisColor = '#81939d';
+    const css=getComputedStyle(document.documentElement);
+    const theme = css.getPropertyValue('--accent').trim();
+    const axisColor = css.getPropertyValue('--muted').trim();
     const baseOpt = {
-      textStyle: { color: '#627f8e', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: 10 },
+      textStyle: { color: axisColor, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: 10 },
       animationDuration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
       color: ['#426b7e', '#dd956e', '#82a99a', '#b5a5c1', '#d7bc81', '#8db4be'],
       grid: { left: 38, right: 15, top: 20, bottom: 28 },
-      tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#e3e9ec', textStyle: { color: '#3e5d6c', fontSize: 11 } }
+      tooltip: { trigger: 'axis', backgroundColor: css.getPropertyValue('--card').trim(), borderColor: css.getPropertyValue('--border').trim(), textStyle: { color: css.getPropertyValue('--text').trim(), fontSize: 11 } }
     };
     charts.band = echarts.init(document.getElementById('chart-band'));
     charts.mode = echarts.init(document.getElementById('chart-mode'));
@@ -113,7 +114,9 @@ App.tabs.stats = (() => {
     if (!charts.band) return;
 
     // ---------------------------------------------------------- 更新图表
-    const theme = charts.theme, axisColor = charts.axisColor;
+    const css=getComputedStyle(document.documentElement),theme=css.getPropertyValue('--accent').trim(),axisColor=css.getPropertyValue('--muted').trim(),card=css.getPropertyValue('--card').trim();
+    for(const chart of [charts.band,charts.mode,charts.month,charts.year]) chart.setOption({textStyle:{color:axisColor},tooltip:{backgroundColor:card,borderColor:css.getPropertyValue('--border').trim(),textStyle:{color:css.getPropertyValue('--text').trim()}}});
+    charts.mode.setOption({legend:{textStyle:{color:axisColor}}});
     const axis = { type: 'category', axisLabel: { color: axisColor } };
     const valueAxis = { type: 'value', minInterval: 1, axisLabel: { color: axisColor }, splitLine: { lineStyle: { color: 'rgba(120,130,160,0.15)' } } };
 
@@ -127,8 +130,8 @@ App.tabs.stats = (() => {
       series: [{
         type: 'pie', radius: ['38%', '66%'], center: ['50%', '46%'],
         data: modeData.map(d => ({ name: d[0], value: d[1] })),
-        label: { color: '#627f8e', fontSize: 11 },
-        itemStyle: { borderColor: '#ffffff', borderWidth: 2 }
+        label: { color: axisColor, fontSize: 11 },
+        itemStyle: { borderColor: card, borderWidth: 2 }
       }]
     });
 
@@ -151,3 +154,4 @@ App.tabs.stats = (() => {
     requestAnimationFrame(resizeAll);
   };
 })();
+window.addEventListener('qsl:themechange',()=>App.tabs.stats());

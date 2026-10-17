@@ -12,6 +12,7 @@ const I18N = (() => {
   const messages = {
     /* ============================================================ 中文 */
     'zh-CN': {
+    themeSystem:'跟随系统',themeLight:'浅色模式',themeDark:'深色模式',
       mapLoadFailed: '地图暂时无法加载。', adminLogin: '电台管理', liveUnavailable: '实时日志暂不可用，当前展示仓库中的静态副本。',
       mapNeedsStation: '电台位置暂未公开。',
       mapNoContacts: '电台位置已设置；为通联记录填写网格或经纬度后，将显示覆盖范围。',
@@ -153,6 +154,7 @@ const I18N = (() => {
 
     /* ============================================================ English */
     'en': {
+      themeSystem:'System theme',themeLight:'Light mode',themeDark:'Dark mode',
       mapLoadFailed: 'Map temporarily unavailable.', adminLogin: 'Station admin', liveUnavailable: 'Live data is unavailable. Showing the repository snapshot.',
       mapNeedsStation: 'Station location has not been published.',
       mapNoContacts: 'Station configured. Add contact grids or coordinates to see the coverage range.',

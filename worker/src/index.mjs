@@ -136,7 +136,7 @@ export default {
       else if(['/admin','/admin/','/admin/login','/admin/setup'].includes(url.pathname)) {
         response=await env.ASSETS.fetch(new Request(new URL('/admin/index.html',url),request));
       } else if(url.pathname==='/') return Response.redirect(env.PUBLIC_SITE_URL,302);
-      else if(/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo)\.js|css\/style\.css|assets\/[^/]+)$/.test(url.pathname)) response=await env.ASSETS.fetch(request);
+      else if(/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights)\.js|css\/style\.css|assets\/[^/]+)$/.test(url.pathname)) response=await env.ASSETS.fetch(request);
       else throw new HttpError(404,'页面不存在。');
       const headers=new Headers(response.headers);
       headers.set('X-Content-Type-Options','nosniff');

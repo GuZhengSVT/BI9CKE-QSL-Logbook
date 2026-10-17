@@ -1,6 +1,16 @@
 /* QSL Logbook — warm paper, midnight radio, copper signal. */
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --bg:#101a21; --bg2:#192730; --card:#16232c; --card2:#1d303b;
+  --border:#2b3e49; --text:#dce7ed; --muted:#9aadb9; --accent:#ec996e;
+  --green:#84c5a8; --orange:#e1b574; --red:#ed9997; --teal:#8dc6d2;
+  --navy:#101e27; --hover:#21303a; --soft-accent:#302c2b;
+}
 :root {
+  color-scheme:light;
   --bg:#f6f7f8;
+  --hover:#faf6f2;
+  --soft-accent:#fcf5ee;
   --bg2:#f8f9fa;
   --card:#fff;
   --card2:#f1f4f5;
@@ -90,7 +100,7 @@ button:disabled {
   left:16px;
   top:-80px;
   z-index:150;
-  background:white;
+  background:var(--card);
   padding:12px 20px;
   border-radius:8px;
 }
@@ -316,7 +326,7 @@ button:disabled {
   align-items:center;
   justify-content:space-between;
   gap:16px;
-  background:#fff;
+  background:var(--card);
   border-bottom:1px solid var(--border);
 }
 
@@ -353,7 +363,7 @@ button:disabled {
 
 .utc-clock time {
   font-size:12px;
-  color:#415761;
+  color:var(--muted);
   letter-spacing:.5px;
 }
 
@@ -370,7 +380,7 @@ button:disabled {
   background:transparent;
   padding:7px 3px;
   font-size:11px;
-  color:#657780;
+  color:var(--muted);
 }
 
 .local-badge {
@@ -616,13 +626,13 @@ h1 {
   align-items:center;
   justify-content:space-between;
   font-size:11px;
-  color:#6f818b;
+  color:var(--muted);
 }
 
 .overview-label .icon {
   width:16px;
   height:16px;
-  color:#8ea0a9;
+  color:var(--muted);
 }
 
 .overview-value {
@@ -632,18 +642,18 @@ h1 {
   margin-top:9px;
   font:500 29px var(--mono);
   letter-spacing:-1px;
-  color:#223e4b;
+  color:var(--text);
 }
 
 .overview-value small {
   font:9px var(--mono);
-  color:#9aa7ae;
+  color:var(--muted);
   letter-spacing:.5px;
 }
 
 .overview-foot {
   font-size:10px;
-  color:#82929a;
+  color:var(--muted);
   margin-top:5px;
 }
 
@@ -654,7 +664,7 @@ h1 {
 
 /* Tables and filters */
 .log-panel {
-  background:white;
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:12px;
   overflow:hidden;
@@ -677,7 +687,7 @@ h1 {
 .panel-title>.icon {
   width:17px;
   height:17px;
-  color:#6c848e;
+  color:var(--muted);
 }
 
 .panel-title h2 {
@@ -686,8 +696,8 @@ h1 {
 }
 
 .total-pill {
-  background:#f0f3f4;
-  color:#8a9ba4;
+  background:var(--bg2);
+  color:var(--muted);
   border-radius:5px;
   padding:1px 7px;
   font:10px var(--mono);
@@ -695,7 +705,7 @@ h1 {
 
 .panel-hint {
   font-size:9px;
-  color:#94a0a6;
+  color:var(--muted);
 }
 
 .filter-bar {
@@ -707,11 +717,11 @@ h1 {
 }
 
 input,select,textarea {
-  border:1px solid #e1e7ea;
+  border:1px solid var(--border);
   border-radius:6px;
   padding:9px 11px;
   color:var(--text);
-  background:#fff;
+  background:var(--card);
   font-size:12px;
   transition:border-color .15s,box-shadow .15s;
   max-width:100%;
@@ -724,7 +734,7 @@ input:focus,select:focus,textarea:focus {
 }
 
 input[type="date"],input[type="time"] {
-  color-scheme:light;
+  color-scheme:inherit;
 }
 
 select {
@@ -743,20 +753,20 @@ select {
   left:11px;
   width:15px;
   height:15px;
-  color:#98a5ac;
+  color:var(--muted);
 }
 
 .search-field input {
   width:100%;
   padding-left:34px;
-  background:#fafbfc;
+  background:var(--bg2);
 }
 
 .filter-bar select {
   font-size:10px;
   min-height:37px;
-  color:#71818a;
-  background:#fff;
+  color:var(--muted);
+  background:var(--card);
   padding-left:10px;
 }
 
@@ -789,8 +799,8 @@ select {
 
 .log-table thead th {
   padding:12px 15px;
-  background:#f8f9fa;
-  color:#82929b;
+  background:var(--bg2);
+  color:var(--muted);
   font-weight:500;
   font-size:11px;
   white-space:nowrap;
@@ -800,7 +810,7 @@ select {
 
 .log-table tbody td {
   padding:15px;
-  border-bottom:1px solid #eff2f3;
+  border-bottom:1px solid var(--border);
   white-space:nowrap;
 }
 
@@ -818,11 +828,11 @@ select {
 }
 
 .log-table tbody tr[data-id]:hover {
-  background:#faf7f3;
+  background:var(--hover);
 }
 
 .log-table tbody tr.expanded {
-  background:#fcf5ee;
+  background:var(--soft-accent);
 }
 
 .log-table tr:last-child td {
@@ -830,7 +840,7 @@ select {
 }
 
 .log-table .date {
-  color:#637a87;
+  color:var(--muted);
   font:11px var(--mono);
   letter-spacing:-.1px;
 }
@@ -838,31 +848,31 @@ select {
 .date small {
   display:block;
   font:9px var(--mono);
-  color:#a2adb3;
+  color:var(--muted);
   margin-top:4px;
 }
 
 .log-table .call {
-  color:#254a5d;
+  color:var(--text);
   font:650 12px var(--mono);
   letter-spacing:.2px;
 }
 
 .call small {
   display:block;
-  color:#99a6ad;
+  color:var(--muted);
   font:9px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   margin-top:4px;
 }
 
 .log-table .rst {
-  color:#87979f;
+  color:var(--muted);
   font:10px var(--mono);
 }
 
 .grid-cell {
   font:10px var(--mono);
-  color:#80949e;
+  color:var(--muted);
 }
 
 .band-tag {
@@ -877,7 +887,7 @@ select {
 .mode-tag {
   font:9px var(--mono);
   letter-spacing:.4px;
-  color:#76858e;
+  color:var(--muted);
 }
 
 .mode-ft8,.mode-ft4 {
@@ -898,8 +908,8 @@ select {
   place-items:center;
   width:58px;
   height:58px;
-  background:#f1f5f6;
-  color:#819aa6;
+  background:var(--bg2);
+  color:var(--muted);
   border-radius:16px;
   margin:0 auto 19px;
 }
@@ -924,7 +934,7 @@ select {
 
 .empty-state {
   padding:85px 24px;
-  background:white;
+  background:var(--card);
   border:1px dashed #d6e0e4;
   border-radius:14px;
 }
@@ -934,7 +944,7 @@ select {
 }
 
 .detail-row td {
-  background:#faf8f5;
+  background:var(--hover);
   cursor:default;
   white-space:normal !important;
 }
@@ -1029,7 +1039,7 @@ select {
 
 .badge-gray {
   color:#9ca7ad;
-  background:#f3f5f6;
+  background:var(--bg2);
 }
 
 .badge-teal {
@@ -1053,14 +1063,14 @@ select {
 
 .pager-summary {
   margin-right:auto;
-  color:#91a0a8;
+  color:var(--muted);
   font-size:10px;
 }
 
 .pager button {
-  background:white;
-  color:#6e828d;
-  border:1px solid #e3e8eb;
+  background:var(--card);
+  color:var(--muted);
+  border:1px solid var(--border);
   border-radius:5px;
   padding:5px 10px;
   font-size:10px;
@@ -1080,14 +1090,14 @@ select {
   font-size:10px;
   padding:5px 7px;
   margin-left:5px;
-  color:#81929b;
+  color:var(--muted);
 }
 
 .log-bottom-note {
   display:flex;
   justify-content:space-between;
   gap:12px;
-  color:#98a5ad;
+  color:var(--muted);
   font-size:9px;
   padding-top:20px;
 }
@@ -1114,9 +1124,9 @@ select {
   align-items:center;
   justify-content:center;
   gap:7px;
-  background:white;
-  color:#667b86;
-  border:1px solid #dfe5e8;
+  background:var(--card);
+  color:var(--muted);
+  border:1px solid var(--border);
   border-radius:6px;
   padding:9px 13px;
   font-size:11px;
@@ -1130,7 +1140,7 @@ select {
 }
 
 .btn:hover:enabled {
-  background:#faf6f2;
+  background:var(--hover);
   border-color:#d7b59f;
   color:var(--accent);
 }
@@ -1199,7 +1209,7 @@ select {
 
 .stat-num {
   font:500 32px var(--mono);
-  color:#274c5e;
+  color:var(--text);
 }
 
 .stat-label {
@@ -1243,7 +1253,7 @@ select {
 
 .chart-box h3 {
   font-size:13px;
-  color:#57717e;
+  color:var(--muted);
   margin-bottom:18px;
   font-weight:500;
 }
@@ -1266,7 +1276,7 @@ select {
 }
 
 .qsl-summary-item {
-  background:white;
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:10px;
   padding:19px;
@@ -1287,7 +1297,7 @@ select {
 
 .qsl-section {
   margin-bottom:23px;
-  background:white;
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:12px;
   overflow:hidden;
@@ -1315,7 +1325,7 @@ select {
 
 .entry-form-card,.side-card {
   min-width:0;
-  background:white;
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   padding:25px;
@@ -1339,7 +1349,7 @@ select {
   min-width:0;
   gap:7px;
   font-size:10px;
-  color:#788b96;
+  color:var(--muted);
 }
 
 .form-grid label.wide {
@@ -1411,7 +1421,7 @@ select {
   gap:6px;
   align-items:center;
   font-size:11px;
-  color:#667c88;
+  color:var(--muted);
 }
 
 .checkbox input {
@@ -1454,12 +1464,12 @@ textarea {
   width:100%;
   resize:vertical;
   font:11px/1.8 var(--mono);
-  background:#fafbfc;
+  background:var(--bg2);
 }
 
 input::file-selector-button {
-  background:#eef2f4;
-  color:#687e8a;
+  background:var(--bg2);
+  color:var(--muted);
   border:0;
   border-radius:4px;
   padding:6px 9px;
@@ -1520,7 +1530,7 @@ input::file-selector-button {
 .card-fig figcaption {
   padding:13px 16px;
   font:11px var(--mono);
-  color:#66818f;
+  color:var(--muted);
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
@@ -1577,7 +1587,7 @@ input::file-selector-button {
   padding:19px 40px;
   border-top:1px solid var(--border);
   font-size:9px;
-  color:#9ca9b0;
+  color:var(--muted);
 }
 
 /* Compact workstation and mobile */
@@ -2085,3 +2095,23 @@ input::file-selector-button {
 #station-map .coverage-ring { stroke-width: 1; opacity: .22; }
 #station-map .outer-ring { stroke-width: 1.25; opacity: .8; }
 @media(min-width:701px) { .hero-map:has(.map-disc) { right: -5%; } }
+
+/* Theme controls and the dark palette share the same semantic surface tokens. */
+.theme-select { max-width:112px; min-width:90px; padding:6px 9px; font-size:11px; color:var(--muted); background:var(--bg2); border-color:var(--border); }
+:root[data-theme="dark"] .band-tag { color:#a2c8dc; background:#233b4b; }
+:root[data-theme="dark"] .badge-green { color:var(--green); background:#213d34; }
+:root[data-theme="dark"] .badge-orange { color:var(--orange); background:#3c3323; }
+:root[data-theme="dark"] .badge-blue,:root[data-theme="dark"] .badge-teal { color:var(--teal); background:#203b48; }
+:root[data-theme="dark"] .badge-gray { color:var(--muted); background:var(--bg2); }
+:root[data-theme="dark"] .badge-red { background:#3e282d; }
+:root[data-theme="dark"] .data-status { background:#342f24; border-color:#5b4a2c; color:var(--orange); }
+:root[data-theme="dark"] .btn-primary { color:#17242c; }
+:root[data-theme="dark"] .btn-primary:hover:enabled { background:#f4b18d; color:#17242c; border-color:#f4b18d; }
+:root[data-theme="dark"] .btn-danger { border-color:#694045; }
+:root[data-theme="dark"] .btn-danger:hover:enabled { background:#39282e; }
+:root[data-theme="dark"] .btn-green { border-color:#365a4b; }
+:root[data-theme="dark"] .btn-blue { border-color:#3a5868; }
+:root[data-theme="dark"] .stat-card::after { background:#486b7a; }
+:root[data-theme="dark"] input::file-selector-button { background:var(--card2); color:var(--text); }
+@media(max-width:700px) { .site-header { height:auto; min-height:60px; flex-wrap:wrap; padding-top:12px; padding-bottom:12px; }.header-right { gap:10px; margin-left:auto; }.theme-select { min-width:0; width:88px; font-size:10px; } }
+@media(max-width:420px) { .utc-clock { display:none; } }

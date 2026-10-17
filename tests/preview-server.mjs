@@ -19,14 +19,19 @@ createServer(async(req,res)=>{
   try {
     const path=new URL(req.url,base).pathname;
     let response;
-    if(path==='/data/config.json') {
+    if(path==='/__mobile') response=new Response('<!doctype html><meta name="viewport" content="width=device-width"><title>Local mobile preview</title><body style="margin:0;background:#263440"><iframe title="390px mobile preview" src="/admin/" style="border:0;width:390px;height:844px;display:block;margin:20px auto"></iframe>',{headers:{'Content-Type':'text/html'}});
+    else if(path==='/data/config.json') {
       const cfg=JSON.parse(await readFile('dist/public/data/config.json','utf8'));cfg.apiBaseUrl=base;
       response=Response.json(cfg,{headers:{'Cache-Control':'no-store'}});
-    } else if(path.startsWith('/api/') || path.startsWith('/admin/')) {
+    } else if(path==='/js/insights.js') response=await asset('dist/backend',path);
+    else if(path.startsWith('/api/') || path.startsWith('/admin/')) {
       const chunks=[];for await(const chunk of req)chunks.push(chunk);
       const request=new Request(new URL(req.url,base),{method:req.method,headers:req.headers,...(!['GET','HEAD'].includes(req.method)?{body:Buffer.concat(chunks)}:{})});
       response=await worker.fetch(request,env);
     } else response=await asset('dist/public',path==='/'?'/index.html':path);
-    res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));
+    const headers=new Headers(response.headers);
+    // Only this isolated, in-memory UI fixture permits framing for breakpoint checks.
+    if(path.startsWith('/admin/')) headers.delete('X-Frame-Options');
+    res.writeHead(response.status,Object.fromEntries(headers));res.end(Buffer.from(await response.arrayBuffer()));
   }catch(error){console.error(error);res.writeHead(500);res.end('Test harness failure');}
 }).listen(8002,'127.0.0.1',()=>console.log('Isolated UI test fixture: '+base+' (account BI9CKE / preview-password-only, in-memory database)'));

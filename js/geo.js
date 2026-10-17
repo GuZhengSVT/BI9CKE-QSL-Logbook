@@ -37,6 +37,11 @@ const QslGeo = (() => {
     const h = Math.sin(p / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(l / 2) ** 2;
     return 2 * R * Math.asin(Math.sqrt(Math.min(1, Math.max(0, h))));
   }
+  function bearing(a,b) {
+    if (distance(a,b) < 0.001 || Math.abs(distance(a,b)-Math.PI*R)<0.001) return null;
+    const p=rad(a.lat),q=rad(b.lat),delta=rad(b.lon-a.lon);
+    return (deg(Math.atan2(Math.sin(delta)*Math.cos(q),Math.cos(p)*Math.sin(q)-Math.sin(p)*Math.cos(q)*Math.cos(delta)))+360)%360;
+  }
   function destination(center, km, bearing) {
     const a = km / R, p = rad(center.lat), l = rad(center.lon), b = rad(bearing);
     const lat = Math.asin(Math.sin(p) * Math.cos(a) + Math.cos(p) * Math.sin(a) * Math.cos(b));
@@ -60,6 +65,6 @@ const QslGeo = (() => {
     const farthest = contacts.reduce((best, item) => !best || item.km > best.km ? item : best, null);
     return { center, contacts, farthest };
   }
-  return { gridCenter, coordinate, location, distance, destination, azimuthal, coverage };
+  return { gridCenter, coordinate, location, distance, bearing, destination, azimuthal, coverage };
 })();
 globalThis.QslGeo = QslGeo;
