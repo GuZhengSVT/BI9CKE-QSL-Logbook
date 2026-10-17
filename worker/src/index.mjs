@@ -1,5 +1,6 @@
 import { auth, verifySession, HttpError } from './auth.mjs';
 import {satelliteCatalog} from './satellites.mjs';
+import {satelliteInfo} from './satellite-info.mjs';
 import '../../js/adif.js';
 import '../../js/geo.js';
 const ADIF = globalThis.ADIF, Geo = globalThis.QslGeo;
@@ -129,21 +130,28 @@ async function api(request, env) {
 }
 export default {
   async fetch(request, env, ctx) {
-    const url=new URL(request.url), isPublic=['/api/public','/api/satellites'].includes(url.pathname);
+    const url=new URL(request.url), isPublic=(['/api/public','/api/satellites'].includes(url.pathname)||/^\/api\/satellites\/[^/]+$/.test(url.pathname));
     try {
       if(isPublic && request.method==='OPTIONS') return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':env.PUBLIC_SITE_ORIGIN,'Access-Control-Allow-Methods':'GET','Vary':'Origin'}});
       let response;
       if(url.pathname==='/api/satellites'&&request.method==='GET')response=await satelliteCatalog(request,ctx);
+      else if(/^\/api\/satellites\/[^/]+$/.test(url.pathname)&&request.method==='GET')response=await satelliteInfo(request,ctx);
       else if(url.pathname.startsWith('/api/')) response=await api(request,env);
-      else if(['/admin','/admin/','/admin/login','/admin/setup'].includes(url.pathname)) {
+      else if(['/dashboard','/dashboard/','/dashboard/login','/dashboard/setup','/admin','/admin/','/admin/login','/admin/setup'].includes(url.pathname)) {
         response=await env.ASSETS.fetch(new Request(new URL('/admin/index.html',url),request));
       } else if(url.pathname==='/') return Response.redirect(env.PUBLIC_SITE_URL,302);
+      else if(url.pathname.startsWith('/dashboard/static/')) {
+        const assetPath=url.pathname.slice('/dashboard/static'.length);
+        if(!/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|satellite-tools|satellite-worker)\.js|css\/(?:style|satellites)\.css|assets\/[^/]+)$/.test(assetPath))throw new HttpError(404,'页面不存在。');
+        const assetUrl=new URL(request.url);assetUrl.pathname=assetPath;
+        response=await env.ASSETS.fetch(new Request(assetUrl,request));
+      }
       else if(/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|satellite-tools|satellite-worker)\.js|css\/(?:style|satellites)\.css|assets\/[^/]+)$/.test(url.pathname)) response=await env.ASSETS.fetch(request);
       else throw new HttpError(404,'页面不存在。');
       const headers=new Headers(response.headers);
       headers.set('X-Content-Type-Options','nosniff');
       headers.set('Referrer-Policy','no-referrer');
-      if(url.pathname.startsWith('/admin')) {headers.set('Cache-Control','no-store');headers.set('X-Frame-Options','DENY');}
+      if((url.pathname.startsWith('/admin')||url.pathname.startsWith('/dashboard'))) {headers.set('Cache-Control','no-store');headers.set('X-Frame-Options','DENY');}
       if(isPublic && request.headers.get('Origin')===env.PUBLIC_SITE_ORIGIN) {headers.set('Access-Control-Allow-Origin',env.PUBLIC_SITE_ORIGIN);headers.set('Vary','Origin');}
       return new Response(response.body,{status:response.status,headers});
     } catch(error) {

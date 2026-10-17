@@ -33,6 +33,9 @@
 
 Worker 的只读 `/api/satellites` 从 [AMSAT 当前轨道目录](https://www.amsat.org/tle/current/nasabare.txt) 获取并校验 TLE，缓存一小时。界面显示获取时间与每颗卫星的轨道历元，历元距离当前超过 7 天时提示更新；源不可用时明确报错，也可手动粘贴带正确校验位的 TLE。卫星出现在目录中不表示其无线电载荷当前可用。
 
+卫星档案通过只读 `/api/satellites/:norad` 获取 [SatNOGS DB](https://db.satnogs.org/about/) 的别名、国家/地区、项目方、发射日期和无线电载荷，缓存 24 小时。保留上下行频率范围、通信模式、反向转发及波特率，目录标注有效与历史载荷分开展示；单频载荷可手动填入多普勒工具。资料经过字段整理，按 CC BY-SA 4.0 标明 SatNOGS DB / Libre Space Foundation、原始记录链接和更新时间。ISS、SO-50 的操作说明另附 ARISS / AMSAT 官方来源与核对日期。没有可靠资料的工作时刻或项目方显示“暂未提供”，目录状态不代表实时开机。
+
+
 轨道传播使用 [satellite.js](https://github.com/shashwatak/satellite-js) 的 SGP4/SDP4 算法；依赖和许可证随网站一起构建，不从第三方 CDN 加载脚本。AOS / LOS 定义为几何地平线 0°，仰角筛选不会改变升落定义；预报不包含地形、建筑遮挡和大气折射。星历与计算结果都是预测值。
 
 ## 本地开发与验证
@@ -74,7 +77,7 @@ npm run dev
 使用 Workers Free 和 D1 Free 即可起步，无需开通 Zero Trust。当前部署地址：
 
 - 展示页：`https://www.guzhengsvt.cn/BI9CKE-QSL-Logbook/`
-- 后台：`https://bi9cke-qsl-backend.lvbowen040427.workers.dev/admin/`
+- 后台：`https://bi9cke-qsl-backend.lvbowen040427.workers.dev/dashboard`
 - 公开接口：`https://bi9cke-qsl-backend.lvbowen040427.workers.dev/api/public`
 
 ### 1. 授权部署工具
@@ -169,3 +172,11 @@ dist/backend/                只上传 Cloudflare Workers 静态资源
 保存通联、编辑、删除、导入、电台设置均通过管理 API 写 D1；请求必须同时通过服务端会话验证与同源校验。浏览器不保存部署令牌或 GitHub PAT。
 
 MIT
+
+### 自定义域名接入（待 DNS 托管完成）
+
+目标前台为 `https://bi9cke.guzhengsvt.cn/`，后台为同源 `/dashboard`。当前代码已支持 `/dashboard`、`/dashboard/login`、`/dashboard/setup`，旧 `/admin/` 仍可访问。后台资源位于 `/dashboard/static/`，避免与 GitHub Pages 的同名静态资源冲突，登录和数据接口仍位于 `/api/`。
+
+当前 guzhengsvt.cn 由阿里云 DNS 托管。使用 Cloudflare 免费方案实现同域名路径路由，需要先将完整 DNS 区域迁到 Cloudflare；域名购买和续费仍可保留阿里云。先对照导入现有记录（含邮件），检查 DNSSEC，再修改注册商 nameservers；未经核对，不切换整个域名的解析。
+
+接入时只为 `bi9cke` 新增代理 CNAME 指向 `guzhengsvt.github.io`，将本仓库 GitHub Pages 的自定义域名设为 `bi9cke.guzhengsvt.cn`，并确保 GitHub 的 HTTPS 证书就绪。博客原有 `www` 和根域名记录保留。为本 Worker 配置 `bi9cke.guzhengsvt.cn/dashboard*` 与 `bi9cke.guzhengsvt.cn/api/*` 两条路由，公开静态页面继续由 GitHub Pages 提供。随后将 `PUBLIC_SITE_ORIGIN`、`PUBLIC_SITE_URL` 和前台 `apiBaseUrl` 改为新站点地址并重新部署。新主机名首次访问需要用原有账号密码重新登录，数据库与管理员密码不需要重建。

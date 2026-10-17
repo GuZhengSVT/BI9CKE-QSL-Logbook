@@ -2115,3 +2115,22 @@ input::file-selector-button {
 :root[data-theme="dark"] input::file-selector-button { background:var(--card2); color:var(--text); }
 @media(max-width:700px) { .site-header { height:auto; min-height:60px; flex-wrap:wrap; padding-top:12px; padding-bottom:12px; }.header-right { gap:10px; margin-left:auto; }.theme-select { min-width:0; width:88px; font-size:10px; } }
 @media(max-width:420px) { .utc-clock { display:none; } }
+
+/* Persistent console access belongs to the navigation rail. */
+body:not(.admin-body) .brand { justify-content:center; gap:9px; padding:0; font-size:19px; text-align:center; }
+body:not(.admin-body) .brand>span:last-child { min-width:0; }
+body:not(.admin-body) .brand-light { font-size:17px; }
+body:not(.admin-body) .brand small { font-size:6px; letter-spacing:1.25px; margin-top:4px; }
+body:not(.admin-body) .brand-mark { width:30px; flex:0 0 30px; }
+body:not(.admin-body) .brand-mark .icon { width:28px; height:28px; }
+.sidebar-action { display:flex; align-items:center; gap:10px; width:100%; padding:13px; margin:0 0 14px; border:1px solid #ffffff15; border-radius:9px; color:#bbccd4; background:#ffffff04; font-size:12px; text-align:left; text-decoration:none; transition:background .2s,border-color .2s; }
+.sidebar-action:hover,.sidebar-action.active { color:#ffbd96; border-color:#ed9a6f66; background:#ed9a6f14; }
+.sidebar-action .icon { width:19px; height:19px; flex:none; }
+.sidebar-action-arrow { margin-left:auto; color:#73919e; }
+.sidebar-action-primary { background:#ed9a6f13; color:#ffbd96; border-color:#ed9a6f35; }
+.sidebar-action-plus { font-size:20px; line-height:1; width:19px; text-align:center; }
+.sidebar-action[hidden] { display:none; }
+@media(max-width:950px) and (min-width:701px) { body:not(.admin-body) .sidebar-action { margin-top:auto; justify-content:center; padding:13px 10px; } body:not(.admin-body) .sidebar-action>span { display:none; } }
+@media(max-width:700px) { .sidebar-action { width:auto; margin:14px 0; align-self:flex-start; padding:9px 12px; font-size:11px; } body:not(.admin-body) .brand { align-self:center; } .sidebar-action-arrow { margin-left:12px; } }
+@media(min-width:701px) { .sidebar>.brand,.sidebar>.nav-label,.sidebar>.sidebar-action,.sidebar>.station-profile { flex-shrink:0; } .sidebar .nav-bar { min-height:0; overflow-y:auto; } }
+@media(min-width:701px) and (max-height:760px) { .sidebar .sidebar-note { display:none; } .sidebar>.sidebar-action { margin-top:auto; } .sidebar .nav-bar { margin-bottom:20px; } }

@@ -4,6 +4,7 @@ import {sgp4} from 'satellite.js';
 import {parseTles,record,state,predictPasses,splitTrack,radialSpeed,doppler} from '../js/orbit.mjs';
 import worker from '../worker/src/index.mjs';
 import {TLE_SOURCE} from '../worker/src/satellites.mjs';
+import {normalizeInfo} from '../worker/src/satellite-info.mjs';
 // Published SGP4 verification vector (Vallado, mirrored by python-sgp4).
 // https://github.com/brandon-rhodes/python-sgp4/blob/master/sgp4/tcppver.out
 const vanguard=`VANGUARD 1
@@ -56,5 +57,30 @@ test('Public catalog proxy caches validated elements, applies CORS, and fails ex
     saved.clear();globalThis.fetch=async()=>new Response('unavailable',{status:503});
     assert.equal((await worker.fetch(request(),env)).status,503);
     assert.equal((await worker.fetch(new Request('https://backend.example/api/satellites',{method:'POST'}),env)).status,404);
+  }finally{globalThis.fetch=originalFetch;if(originalCaches===undefined)delete globalThis.caches;else globalThis.caches=originalCaches;}
+});
+test('Satellite profiles preserve frequency ranges, reject foreign rows and do not invent missing facts',()=>{
+  const info=normalizeInfo(25544,[{norad_cat_id:25544,sat_id:'test',name:'ISS',operator:'None',countries:'RU,US',website:'javascript:alert(1)'}],[
+    {norad_cat_id:25544,description:'Linear',uplink_low:435000000,uplink_high:435100000,downlink_low:-1,mode:'USB',alive:true,status:'active',citation:'https://example.org/radio'},
+    {norad_cat_id:25544,description:'Old',alive:false,status:'inactive'},
+    {norad_cat_id:123,name:'Unrelated',alive:true,status:'active'}
+  ]);
+  assert.equal(info.operator,'');assert.equal(info.website,'');assert.equal(info.transmitters.length,2);
+  assert.equal(info.transmitters[0].uplinkHigh,435100000);assert.equal(info.transmitters[0].downlinkLow,null);
+  assert(info.transmitters[0].active);assert(!info.transmitters[1].active);assert.equal(info.license,'CC BY-SA 4.0');
+  assert.equal(normalizeInfo(10,[],[]),null);assert.throws(()=>normalizeInfo(10,{},[]));
+});
+test('Satellite metadata API uses fixed upstream URLs, caches by NORAD and handles missing/unavailable sources',async()=>{
+  const originalFetch=globalThis.fetch,originalCaches=globalThis.caches;let calls=0;const saved=new Map();
+  globalThis.caches={default:{match:async key=>saved.get(key.url)?.clone(),put:async(key,response)=>saved.set(key.url,response)}};
+  globalThis.fetch=async url=>{assert(url.startsWith('https://db.satnogs.org/api/'));assert(url.includes('norad_cat_id=25544'));calls++;return Response.json(url.includes('/transmitters/')?[]:[{norad_cat_id:25544,sat_id:'test',name:'ISS'}]);};
+  const env={PUBLIC_SITE_ORIGIN:'https://radio.example'},get=(path,method='GET')=>worker.fetch(new Request('https://backend.example'+path,{method,headers:{Origin:env.PUBLIC_SITE_ORIGIN}}),env);
+  try {
+    const response=await get('/api/satellites/25544');assert.equal(response.status,200);assert.equal(response.headers.get('Access-Control-Allow-Origin'),env.PUBLIC_SITE_ORIGIN);assert.equal((await response.json()).name,'ISS');
+    assert.equal((await get('/api/satellites/25544?ignored=yes')).status,200);assert.equal(calls,2);
+    assert.equal((await get('/api/satellites/not-a-number')).status,400);assert.equal(calls,2);
+    saved.clear();globalThis.fetch=async()=>Response.json([]);assert.equal((await get('/api/satellites/123')).status,404);
+    globalThis.fetch=async()=>new Response('unavailable',{status:503});assert.equal((await get('/api/satellites/123')).status,503);
+    assert.equal((await get('/api/satellites/25544','POST')).status,404);
   }finally{globalThis.fetch=originalFetch;if(originalCaches===undefined)delete globalThis.caches;else globalThis.caches=originalCaches;}
 });

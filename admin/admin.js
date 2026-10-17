@@ -30,6 +30,7 @@ const Admin = {
       this.resetForm();this.tab('entry');const form=document.getElementById('record-form');form.elements.SAT_NAME.value=name;form.elements.PROP_MODE.value='SAT';document.getElementById('entry-now').click();form.elements.CALL.focus();
     }});
     this.satelliteTools?.setActive(name==='satellites');
+    document.querySelector('[data-admin-tab=entry].sidebar-action')?.classList.toggle('active',name==='entry');
     window.scrollTo(0,0);
   },
   async refresh() {
@@ -65,14 +66,14 @@ const Admin = {
       <div class="dashboard-grid"><div class="dashboard-card coverage-card"><div class="dashboard-card-head"><div><div class="eyebrow">SIGNAL REACH</div><h2>通联覆盖</h2></div><button class="text-button" data-jump="settings">电台位置 ↗</button></div><div id="dashboard-map" class="dashboard-map"></div><div class="coverage-caption">${!coverage.center?'在电台设置中填写位置，点亮你的通联地图。':coverage.farthest?`最远 ${e(coverage.farthest.record.CALL)} <strong>${Math.round(coverage.farthest.km).toLocaleString()} km</strong> · 已定位 ${coverage.contacts.length} / ${s.total} 条`:'本台位置已设置，等待带有网格或坐标的通联。'}</div></div>
       <div class="dashboard-card"><div class="dashboard-card-head"><div><div class="eyebrow">YOUR PROGRESS</div><h2>探索进度</h2></div><span class="panel-hint">按日志记录统计</span></div><div class="progress-stat"><span>DXCC / 国家</span><strong>${s.dxcc}<small> 已通联</small></strong><p>${s.dxccConfirmed} 个已确认</p><progress value="${s.dxccConfirmed}" max="${Math.max(1,s.dxcc)}" aria-label="DXCC 确认进度"></progress></div><div class="progress-stat"><span>网格覆盖</span><strong>${s.grids}<small> 个四位网格</small></strong><p>${s.gridsConfirmed} 个已确认</p><progress value="${s.gridsConfirmed}" max="${Math.max(1,s.grids)}" aria-label="网格确认进度"></progress></div><button class="dashboard-task" data-jump="qsl"><span>QSL 待寄出 <b>${s.pending}</b></span><span>处理待办 →</span></button></div>
       <div class="dashboard-card dashboard-wide"><div class="dashboard-card-head"><div><div class="eyebrow">ACTIVITY</div><h2>近 12 个月</h2></div><span class="panel-hint">UTC · 每月通联次数</span></div><div class="activity-chart" role="img" aria-label="${s.months.map(m=>`${m.month}：${m.count} 次`).join('；')}">${s.months.map(m=>`<div class="activity-column"><span class="activity-count">${m.count}</span><div class="activity-track"><i style="height:${m.count/max*100}%"></i></div><span class="activity-label">${m.month.slice(2)}</span></div>`).join('')}</div></div>
-      <div class="dashboard-card dashboard-wide"><div class="dashboard-card-head"><div><div class="eyebrow">LATEST CONTACTS</div><h2>最近通联</h2></div><button class="text-button" data-jump="records">查看全部 →</button></div><div class="recent-list">${this.records.slice(0,5).map(r=>`<button class="recent-contact" data-open-record="${e(ADIF.recordId(r))}"><span class="recent-avatar">${e(r.CALL.slice(0,2))}</span><span class="recent-call"><strong>${e(r.CALL)}</strong><small>${e(r.COUNTRY||r.GRIDSQUARE||'未填写地区')}</small></span><span class="recent-mode">${e(r.BAND)} · ${e(r.MODE)}</span><span class="recent-date">${ADIF.prettyDate(r.QSO_DATE)}<small>${ADIF.prettyTime(r.TIME_ON)} UTC</small></span><span aria-hidden="true">↗</span></button>`).join('')||'<p class="empty">还没有通联记录，点击右上角开始记录。</p>'}</div></div></div>`;
+      <div class="dashboard-card dashboard-wide"><div class="dashboard-card-head"><div><div class="eyebrow">LATEST CONTACTS</div><h2>最近通联</h2></div><button class="text-button" data-jump="records">查看全部 →</button></div><div class="recent-list">${this.records.slice(0,5).map(r=>`<button class="recent-contact" data-open-record="${e(ADIF.recordId(r))}"><span class="recent-avatar">${e(r.CALL.slice(0,2))}</span><span class="recent-call"><strong>${e(r.CALL)}</strong><small>${e(r.COUNTRY||r.GRIDSQUARE||'未填写地区')}</small></span><span class="recent-mode">${e(r.BAND)} · ${e(r.MODE)}</span><span class="recent-date">${ADIF.prettyDate(r.QSO_DATE)}<small>${ADIF.prettyTime(r.TIME_ON)} UTC</small></span><span aria-hidden="true">↗</span></button>`).join('')||'<p class="empty">还没有通联记录，点击侧栏的新增通联开始记录。</p>'}</div></div></div>`;
     this.renderDashboardMap(coverage);
   },
   async renderDashboardMap({center,contacts,farthest}) {
     const el=document.getElementById('dashboard-map');
     if(!center) {el.innerHTML='<div class="map-placeholder"><span>◎</span><strong>从你的坐标出发</strong><small>每一个光点，都是一次远方的回应</small></div>';return;}
     try {
-      if(!this.land) {const response=await fetch('/assets/world-land-dots.json');if(!response.ok)throw new Error('map');this.land=(await response.json()).points;}
+      if(!this.land) {const response=await fetch('/dashboard/static/assets/world-land-dots.json');if(!response.ok)throw new Error('map');this.land=(await response.json()).points;}
       if(document.getElementById('dashboard-map')!==el)return;
       const project=p=>QslGeo.azimuthal(center,p),maxDistance=Math.PI*6371.0088;
       el.innerHTML=`<svg viewBox="150 0 420 360" role="img" aria-label="以本台为中心的方位等距通联地图"><circle class="map-disc" cx="360" cy="180" r="164"/>${this.land.map(([lon,lat])=>{const p=project({lat,lon});return `<circle class="land-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r=".8"/>`;}).join('')}${farthest?[1/3,2/3,1].map(scale=>`<circle class="coverage-ring" cx="360" cy="180" r="${farthest.km/maxDistance*164*scale}"/>`).join(''):''}${contacts.map(c=>{const p=project(c.position);return `<circle class="contact-point" cx="${p.x}" cy="${p.y}" r="2.5"><title>${this.esc(c.record.CALL)} · ${Math.round(c.km)} km</title></circle>`;}).join('')}<circle cx="360" cy="180" r="10" class="station-glow"/><circle cx="360" cy="180" r="3.5" class="station-dot"/></svg>`;
@@ -158,7 +159,7 @@ const Admin = {
       if(!response.ok) throw new Error('无法读取登录配置，请稍后刷新。');
       const state=await response.json(),setupToken=new URLSearchParams(location.hash.slice(1)).get('setup');
       // Keep the bootstrap token in memory only, out of history and referrers.
-      if(setupToken) history.replaceState(null,'','/admin/setup');
+      if(setupToken) history.replaceState(null,'','/dashboard/setup');
       if(!state.configured && !setupToken) {status.textContent='后台尚未初始化。请使用部署时生成的专用链接设置管理员密码。';return;}
       const setup=!state.configured;
       document.getElementById('login-username').value=state.username;
@@ -179,7 +180,7 @@ const Admin = {
           if(setup && password!==document.getElementById('login-confirm').value) throw new Error('两次密码不一致。');
           const result=await fetch('/api/auth/'+(setup?'setup':'login'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('login-username').value,password,...(setup?{setupToken}:{})})});
           const data=await result.json();if(!result.ok) throw new Error(data.error || '登录失败。');
-          location.replace('/admin/');
+          location.replace('/dashboard');
         }catch(error){status.textContent=error.message;button.disabled=false;}
       };
     }catch(error){status.textContent=error.message;}
@@ -205,7 +206,7 @@ const Admin = {
       try {
         const response=await fetch('/api/auth/logout',{method:'POST'});
         if(!response.ok) throw new Error('退出失败，请重试。');
-        location.replace('/admin/');
+        location.replace('/dashboard');
       }catch(error){this.message(error.message,true);}
     };
     document.getElementById('admin-search').oninput=()=>{this.page=1;this.renderRecords();};
@@ -248,3 +249,18 @@ const Admin = {
   }
 };
 Admin.init();
+
+// One clock loop per page; the local zone follows the browser's time zone.
+const localClockFormat=new Intl.DateTimeFormat('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+const localZone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+document.getElementById('admin-local-zone').textContent='本地';
+document.getElementById('admin-local-zone').title=localZone;
+function updateAdminClocks() {
+  const now=new Date();
+  for(const [id,value] of [['admin-utc-time',now.toISOString().slice(11,19)],['admin-local-time',localClockFormat.format(now)]]) {
+    const el=document.getElementById(id);el.textContent=value;el.dateTime=now.toISOString();el.title=id.includes('local')?localZone:'UTC';
+  }
+}
+updateAdminClocks();
+const adminClockTimer=setInterval(updateAdminClocks,1000);
+window.addEventListener('pagehide',()=>clearInterval(adminClockTimer),{once:true});
