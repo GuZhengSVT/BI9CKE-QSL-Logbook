@@ -4,94 +4,82 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="业余无线电通联日志与 QSL 卡片交换记录 / Amateur Radio QSO log & QSL card exchange">
+  <meta name="theme-color" content="#172c36">
   <title>业余无线电通联日志 · QSL Logbook</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📻</text></svg>">
+  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 </head>
 <body>
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="site-title">
-        <span class="logo">📻</span>
-        <div>
-          <h1 id="site-name">业余无线电 QSL Logbook</h1>
-          <p id="site-sub" class="site-sub">通联日志 · QSL 卡片交换记录</p>
+  <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-radio" viewBox="0 0 24 24"><path d="m5 8 13-5M4 9h16v11H4zM7 13h5v4H7zM16 13h1m-1 4h1"/></symbol>
+    <symbol id="i-log" viewBox="0 0 24 24"><path d="M5 3h13a1 1 0 0 1 1 1v17H6a3 3 0 0 1 0-6h13M5 3v12M9 7h6m-6 4h4M6 18h13"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15v-4m5 4V6m5 9V9"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-7 5 7"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6h14M5 18h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h3l2-7 4 14 4-14 2 7h3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  </defs></svg>
+
+  <a href="#main-content" class="skip-link" data-i18n="skipContent">跳转到主内容</a>
+  <aside class="sidebar">
+    <a class="brand" href="#log" aria-label="QSL Logbook"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-radio"/></svg></span><span>QSL<span class="brand-light"> logbook</span><small>AMATEUR RADIO STATION</small></span></a>
+    <div class="nav-label" data-i18n="workspace">电台工作台</div>
+    <nav class="nav-bar" aria-label="主导航">
+      <a class="nav-item" data-tab="log" href="#log"><svg class="icon" aria-hidden="true"><use href="#i-log"/></svg><span data-i18n="navLog">通联日志</span><span id="nav-log-count" class="nav-count">0</span></a>
+      <a class="nav-item" data-tab="stats" href="#stats"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="navStats">数据统计</span></a>
+      <a class="nav-item" data-tab="cards" href="#cards"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><span data-i18n="navCards">卡片收藏</span></a>
+    </nav>
+    <div class="sidebar-note"><div class="signal-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><p data-i18n="radioQuote">让电波跨越山海。</p><span>CQ CQ CQ · 73</span></div>
+    <div class="station-profile"><span class="station-avatar"><svg class="icon" aria-hidden="true"><use href="#i-radio"/></svg></span><div><strong id="station-call">QSL</strong><small data-i18n="stationLabel">业余无线电台</small></div><span class="profile-dot" title="Local logbook"></span></div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="site-header">
+      <div class="breadcrumb"><span data-i18n="myStation">我的电台</span><span class="breadcrumb-divider">/</span><strong id="current-page">通联日志</strong></div>
+      <div class="header-right"><div class="utc-clock"><span class="clock-dot"></span><time id="utc-time">00:00:00</time><span>UTC</span></div><select id="lang-switch" class="lang-switch" title="Language / 语言" aria-label="Language"><option value="zh-CN">简体中文</option><option value="en">English</option></select></div>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <div id="data-status" class="data-status" role="status" hidden></div>
+      <div class="page-heading"><div><div class="eyebrow">THE WORLD ON YOUR FREQUENCY</div><h1 id="page-title">通联日志</h1><p id="page-description">记录每一次相遇，收藏来自世界的回响。</p></div><div class="page-actions"><a id="admin-link" class="btn" hidden><svg class="icon" aria-hidden="true"><use href="#i-radio"/></svg><span data-i18n="adminLogin">电台管理</span></a></div></div>
+
+      <section id="page-log" class="tab-page" aria-label="通联日志">
+        <div class="station-hero">
+          <div class="hero-copy"><div class="hero-kicker"><span></span><span id="site-name">QSL Logbook</span></div><h2 data-i18n="heroTitle">电波所至，皆是相遇。</h2><p data-i18n="heroDescription">从一个呼号出发，与整个世界对话。</p><button class="hero-link" id="hero-stats"><span data-i18n="exploreStats">探索通联足迹</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
+          <div class="hero-map"><svg id="station-map" viewBox="0 0 720 360" role="img" aria-labelledby="map-title map-status"><title id="map-title">电台位置与通联覆盖范围</title><g id="map-land"><image href="assets/world-map.svg" x="0" y="10" width="720" height="300"/></g><g id="map-data"></g></svg></div>
+          <span class="hero-watermark" aria-hidden="true">73</span>
         </div>
-      </div>
-      <div class="header-right">
-        <span id="local-badge" class="local-badge"></span>
-        <select id="lang-switch" class="lang-switch" title="Language / 语言" aria-label="Language">
-          <option value="zh-CN">简体中文</option>
-          <option value="en">English</option>
-        </select>
-      </div>
-    </div>
-  </header>
-
-  <nav class="nav-bar">
-    <button class="nav-item" data-tab="log" data-i18n="navLog">📖 通联日志</button>
-    <button class="nav-item" data-tab="stats" data-i18n="navStats">📊 统计</button>
-    <button class="nav-item" data-tab="qsl" data-i18n="navQsl">💌 QSL 管理</button>
-    <button class="nav-item" data-tab="entry" data-i18n="navEntry">✍️ 录入 / 导入</button>
-    <button class="nav-item" data-tab="cards" data-i18n="navCards">🖼 QSL 卡片</button>
-  </nav>
-
-  <main>
-    <!-- 通联日志 -->
-    <section id="page-log" class="tab-page">
-      <div id="log-filters" class="filter-bar"></div>
-      <div class="table-wrap">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th data-i18n="thDate">日期</th><th data-i18n="thCall">呼号</th><th data-i18n="thBand">波段</th><th data-i18n="thMode">模式</th>
-              <th data-i18n="thRst">RST 发/收</th><th data-i18n="thGrid">网格</th><th data-i18n="thQslSent">QSL 发出</th><th data-i18n="thQslRcvd">QSL 收到</th>
-            </tr>
-          </thead>
-          <tbody id="log-body"></tbody>
-        </table>
-      </div>
-      <div id="log-pager" class="pager"></div>
-    </section>
-
-    <!-- 统计 -->
-    <section id="page-stats" class="tab-page"></section>
-
-    <!-- QSL 管理 -->
-    <section id="page-qsl" class="tab-page"></section>
-
-    <!-- 录入 / 导入 -->
-    <section id="page-entry" class="tab-page"></section>
-
-    <!-- QSL 卡片 -->
-    <section id="page-cards" class="tab-page"></section>
-  </main>
-
-  <footer class="site-footer">
-    <p data-i18n="footer">纯静态站点 · 数据以 data/log.adi（ADIF 标准）为权威源 · 本机草稿仅存于当前浏览器</p>
-  </footer>
-
-  <!-- 第三方库（本地化，无 CDN 依赖，国内访问友好） -->
+        <p id="map-status" class="map-status" role="status"></p>
+        <div id="overview-stats" class="overview-stats" aria-label="通联概览"></div>
+        <div class="log-panel">
+          <div class="panel-heading"><div class="panel-title"><svg class="icon" aria-hidden="true"><use href="#i-log"/></svg><h2 data-i18n="recentContacts">通联记录</h2><span id="log-total" class="total-pill">0</span></div><span class="panel-hint" data-i18n="rowHint">点击记录，查看通联详情</span></div>
+          <div id="log-filters" class="filter-bar"></div>
+          <div class="table-wrap"><table class="log-table"><thead><tr><th data-i18n="thDate">日期 / UTC</th><th data-i18n="thCall">呼号</th><th data-i18n="thBand">波段</th><th data-i18n="thMode">模式</th><th data-i18n="thRst">RST 发/收</th><th data-i18n="thGrid">网格</th><th data-i18n="thQslSent">QSL 发出</th><th data-i18n="thQslRcvd">QSL 收到</th></tr></thead><tbody id="log-body"></tbody></table></div>
+          <div id="log-pager" class="pager"></div>
+        </div>
+        <div class="log-bottom-note"><span><span class="tiny-dot"></span><span data-i18n="localPrivacy">你的每一次通联，都值得被珍藏。</span></span><span>ADIF 3.1.4 <span class="note-separator">/</span> 73 &amp; GOOD DX</span></div>
+      </section>
+      <section id="page-stats" class="tab-page" aria-label="数据统计"></section>
+      <section id="page-cards" class="tab-page" aria-label="QSL 卡片"></section>
+    </main>
+    <footer class="site-footer"><span id="site-sub">业余无线电通联日志</span><span data-i18n="footer">以电波相识，以卡片为念。</span></footer>
+  </div>
   <script src="vendor/echarts.min.js"></script>
-  <!-- 应用模块 -->
-  <script src="js/i18n.js"></script>
-  <script src="js/adif.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/github.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/stats.js"></script>
-  <script src="js/qsl.js"></script>
-  <script src="js/entry.js"></script>
-  <script src="js/cards.js"></script>
+  <script src="js/i18n.js"></script><script src="js/adif.js"></script><script src="js/geo.js"></script><script src="js/store.js"></script><script src="js/app.js"></script><script src="js/map.js"></script><script src="js/stats.js"></script><script src="js/cards.js"></script>
   <script>
-    // 启动：恢复语言 → 应用静态文本 → 初始化应用
     document.getElementById('lang-switch').value = I18N.getLang();
+    document.documentElement.lang = I18N.getLang();
     document.getElementById('lang-switch').addEventListener('change', e => I18N.setLang(e.target.value));
     I18N.applyStatic();
     App.init().catch(err => {
       console.error(err);
-      document.getElementById('log-body').innerHTML =
-        '<tr><td colspan="8" class="empty">' + Utils.esc(I18N.t('initFail', { msg: err.message })) + '</td></tr>';
+      document.getElementById('page-log').classList.add('active');
+      document.getElementById('log-body').innerHTML = '<tr><td colspan="8" class="empty">' + Utils.esc(I18N.t('initFail', { msg: err.message })) + '</td></tr>';
     });
   </script>
 </body>

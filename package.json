@@ -1,0 +1,20 @@
+{
+  "name": "bi9cke-qsl-logbook",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "admin:prepare": "node scripts/prepare-admin.mjs",
+    "dev": "npm run build && wrangler dev --config worker/wrangler.jsonc",
+    "db:local": "wrangler d1 migrations apply qsl-logbook --local --config worker/wrangler.jsonc",
+    "db:remote": "wrangler d1 migrations apply qsl-logbook --remote --config worker/wrangler.jsonc",
+    "deploy:backend": "npm run build && wrangler deploy --config worker/wrangler.jsonc"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  }
+}

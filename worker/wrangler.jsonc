@@ -1,0 +1,25 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "bi9cke-qsl-backend",
+  "account_id": "ec1551cdc1471a3818f8b642a6993859",
+  "main": "src/index.mjs",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../dist/backend",
+    "binding": "ASSETS",
+    "html_handling": "none",
+    "run_worker_first": true
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "qsl-logbook",
+    "database_id": "aec06a7c-359d-4f65-8d63-fc0f165d4eca",
+    "migrations_dir": "migrations"
+  }],
+  "vars": {
+    "PUBLIC_SITE_ORIGIN": "https://www.guzhengsvt.cn",
+    "PUBLIC_SITE_URL": "https://www.guzhengsvt.cn/BI9CKE-QSL-Logbook/",
+    "ADMIN_USERNAME": "BI9CKE"
+  }
+}

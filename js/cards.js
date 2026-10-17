@@ -22,19 +22,19 @@ App.tabs.cards = function () {
 
   function render(cards) {
     if (cards.length === 0) {
-      el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('cardsEmpty')) + '</p>';
+      el.innerHTML = `<div class="empty empty-state"><div class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg></div><h2 class="empty-title">${Utils.esc(I18N.t('collectionEmpty'))}</h2><p class="empty-description">${Utils.esc(I18N.t('collectionPublicHint'))}</p></div>`;
       return;
     }
     el.innerHTML = `
       <div class="cards-toolbar">
-        <input type="search" id="card-search" placeholder="${Utils.esc(I18N.t('cardsSearch'))}">
+        <input type="search" id="card-search" aria-label="${Utils.esc(I18N.t('cardsSearch'))}" placeholder="${Utils.esc(I18N.t('cardsSearch'))}">
         <span class="filter-count">${Utils.esc(I18N.t('cardsCount', { n: cards.length }))}</span>
       </div>
       <div class="card-grid" id="card-grid"></div>
-      <div class="lightbox" id="lightbox" hidden>
+      <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="QSL card" tabindex="-1" hidden>
         <img id="lightbox-img" alt="QSL card">
         <div class="lightbox-caption" id="lightbox-caption"></div>
-        <button class="lightbox-close" id="lightbox-close">✕</button>
+        <button class="lightbox-close" id="lightbox-close" aria-label="${Utils.esc(I18N.t('closePreview'))}">✕</button>
       </div>`;
 
     const grid = el.querySelector('#card-grid');
@@ -44,7 +44,7 @@ App.tabs.cards = function () {
         : cards;
       grid.innerHTML = list.map(c => `
         <figure class="card-fig" data-call="${Utils.esc(c.call || '')}">
-          <img loading="lazy" src="qsl-cards/${Utils.esc(c.file)}" alt="QSL card ${Utils.esc(c.call || '')}" data-full="${Utils.esc(c.file)}" data-caption="${Utils.esc(c.call || '')} ${Utils.esc(ADIF.prettyDate(c.date) || '')} ${Utils.esc(c.note || '')}">
+          <button class="card-open" aria-label="${Utils.esc(c.call || 'QSL card')}"><img loading="lazy" src="qsl-cards/${Utils.esc(c.file)}" alt="QSL card ${Utils.esc(c.call || '')}" data-full="${Utils.esc(c.file)}" data-caption="${Utils.esc(c.call || '')} ${Utils.esc(ADIF.prettyDate(c.date) || '')} ${Utils.esc(c.note || '')}"></button>
           <figcaption>${Utils.esc(c.call || '')}${c.date ? ' · ' + Utils.esc(ADIF.prettyDate(c.date)) : ''}</figcaption>
         </figure>`).join('') || '<p class="empty">' + Utils.esc(I18N.t('cardsNoMatch')) + '</p>';
     };
@@ -53,18 +53,24 @@ App.tabs.cards = function () {
     el.querySelector('#card-search').addEventListener('input', e => renderGrid(e.target.value.trim().toLowerCase()));
 
     const lb = el.querySelector('#lightbox');
+    let opener;
+    const close = () => { lb.hidden = true; if (opener) opener.focus(); };
     grid.addEventListener('click', e => {
-      const img = e.target.closest('img[data-full]');
+      const button = e.target.closest('.card-open');
+      const img = button && button.querySelector('img[data-full]');
       if (!img) return;
       el.querySelector('#lightbox-img').src = 'qsl-cards/' + img.dataset.full;
       el.querySelector('#lightbox-caption').textContent = img.dataset.caption || '';
+      opener = button;
       lb.hidden = false;
+      el.querySelector('#lightbox-close').focus();
     });
     lb.addEventListener('click', e => {
-      if (e.target === lb || e.target.closest('.lightbox-close')) lb.hidden = true;
+      if (e.target === lb || e.target.closest('.lightbox-close')) close();
     });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !lb.hidden) lb.hidden = true;
+    lb.addEventListener('keydown', e => {
+      if (e.key === 'Escape') close();
+      if (e.key === 'Tab') { e.preventDefault(); el.querySelector('#lightbox-close').focus(); }
     });
   }
 };

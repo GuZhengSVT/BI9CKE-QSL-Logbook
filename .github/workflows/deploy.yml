@@ -1,5 +1,5 @@
 # ============================================================================
-# 部署到 GitHub Pages（纯静态，无构建步骤）
+# 只部署公开展示资源；后台由 Cloudflare Workers 单独部署。
 # push 到 main 分支自动部署；也可以在 Actions 页面手动触发
 # ============================================================================
 name: Deploy to GitHub Pages
@@ -28,14 +28,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build public site and backend assets
+        run: npm ci && npm run build
+        env:
+          QSL_API_BASE_URL: ${{ vars.QSL_API_BASE_URL }}
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 整个仓库根目录即为站点根（相对路径引用，兼容子路径/自定义域名）
-          path: '.'
+          path: dist/public
 
       - name: Deploy to GitHub Pages
         id: deployment

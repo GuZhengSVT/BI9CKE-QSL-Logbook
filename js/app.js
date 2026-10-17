@@ -32,8 +32,9 @@ const App = {
     records: [],          // 合并后的记录
     filter: { q: '', band: '', mode: '', year: '', country: '' },
     page: 1,
-    pageSize: 50,
+    pageSize: 25,
     expanded: null,       // 展开详情的 record id
+    activeTab: 'log',
     config: {}
   },
 
@@ -54,6 +55,13 @@ const App = {
     document.title = call ? I18N.t('titleWithCall', { call }) : I18N.t('title');
     document.getElementById('site-name').textContent = call ? I18N.t('siteName', { call }) : I18N.t('appName');
     document.getElementById('site-sub').textContent = cfg.name || I18N.t('appSub');
+    document.getElementById('station-call').textContent = call || 'QSL';
+    const admin = document.getElementById('admin-link');
+    admin.hidden = !cfg.apiBaseUrl;
+    if (cfg.apiBaseUrl) admin.href = new URL('/admin/', cfg.apiBaseUrl).href;
+    const status = document.getElementById('data-status');
+    status.hidden = !Store.isFallback();
+    status.textContent = I18N.t('liveUnavailable');
   },
 
   /* ------------------------------------------------------------- 数据刷新 */
@@ -66,14 +74,20 @@ const App = {
     for (const fn of Object.values(this.tabs)) {
       try { fn(); } catch (e) { console.error('render error:', e); }
     }
-    this.updateLocalBadge();
+
+    this.renderOverview();
+    StationMap.render(this.state.config, this.state.records);
   },
 
   /* --------------------------------------------------------------- 导航 */
   showTab(name) {
     if (!this.tabs[name]) name = 'log';
+    this.state.activeTab = name;
+    this.updatePageHeading();
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === name);
+      if (el.dataset.tab === name) el.setAttribute('aria-current', 'page');
+      else el.removeAttribute('aria-current');
     });
     document.querySelectorAll('.tab-page').forEach(el => {
       el.classList.toggle('active', el.id === 'page-' + name);
@@ -81,20 +95,62 @@ const App = {
     if (history.replaceState) history.replaceState(null, '', '#' + name);
     const fn = this.tabs[name];
     if (fn) fn();
+    window.scrollTo(0, 0);
+  },
+
+  updatePageHeading() {
+    const name = this.state.activeTab;
+    const key = { log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[name];
+    document.getElementById('page-title').textContent = I18N.t(key);
+    document.getElementById('current-page').textContent = I18N.t(key);
+    document.getElementById('page-description').textContent = I18N.t(name + 'Description');
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.setAttribute('title', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[el.dataset.tab]));
+    });
+    document.querySelectorAll('.tab-page').forEach(el => {
+      el.setAttribute('aria-label', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards' }[el.id.slice(5)]));
+    });
+  },
+
+  renderOverview() {
+    const records = this.state.records;
+    const confirmed = records.filter(r => r.QSL_RCVD === 'Y' || r.LOTW_QSL_RCVD === 'Y').length;
+    const dxcc = new Set(records.map(r => r.DXCC || r.COUNTRY).filter(Boolean)).size;
+    const bands = new Set(records.map(r => r.BAND).filter(Boolean)).size;
+    const modes = new Set(records.map(r => r.MODE).filter(Boolean)).size;
+    const summary = [
+      ['overviewTotal', records.length, 'QSO', 'log', I18N.t('totalFoot')],
+      ['overviewDxcc', dxcc, 'DXCC', 'globe', I18N.t('dxccFoot')],
+      ['overviewConfirmed', confirmed, 'QSO', 'check', I18N.t('confirmedFoot', { n: records.length ? Math.round(confirmed / records.length * 100) : 0 })],
+      ['overviewBands', bands, 'BANDS', 'wave', I18N.t('bandsFoot', { n: modes })]
+    ];
+    document.getElementById('overview-stats').innerHTML = summary.map(([label, value, unit, icon, foot]) => `
+      <div class="overview-card"><div class="overview-label"><span>${Utils.esc(I18N.t(label))}</span><svg class="icon" aria-hidden="true"><use href="#i-${icon}"/></svg></div><div class="overview-value">${value.toLocaleString()}<small>${unit}</small></div><div class="overview-foot">${Utils.esc(foot)}</div></div>`).join('');
+    document.getElementById('nav-log-count').textContent = records.length.toLocaleString();
+    document.getElementById('log-total').textContent = records.length.toLocaleString();
   },
 
   bindEvents() {
-    // 导航点击
-    document.querySelector('.nav-bar').addEventListener('click', e => {
-      const item = e.target.closest('.nav-item');
-      if (item) this.showTab(item.dataset.tab);
+    const clock = () => { document.getElementById('utc-time').textContent = new Date().toISOString().slice(11, 19); };
+    clock();
+    setInterval(clock, 1000);
+    window.addEventListener('hashchange', () => {
+      const name = location.hash.slice(1);
+      if (this.tabs[name]) this.showTab(name);
     });
+    document.getElementById('hero-stats').onclick = () => { location.hash = 'stats'; };
 
     // 日志筛选栏
     const filterBar = document.getElementById('log-filters');
     if (filterBar) {
       filterBar.addEventListener('input', e => {
         if (e.target.name === 'q') { this.state.filter.q = e.target.value; this.state.page = 1; this.debounceRender(); }
+      });
+      filterBar.addEventListener('click', e => {
+        if (!e.target.closest('[data-reset-filters]')) return;
+        this.state.filter = { q: '', band: '', mode: '', year: '', country: '' };
+        this.state.page = 1;
+        this.tabs.log();
       });
       filterBar.addEventListener('change', e => {
         const name = e.target.name;
@@ -109,18 +165,12 @@ const App = {
     const tbody = document.getElementById('log-body');
     if (tbody) {
       tbody.addEventListener('click', e => {
-        const btn = e.target.closest('button[data-action]');
         const row = e.target.closest('tr[data-id]');
         if (!row) return;
         const id = row.dataset.id;
         const rec = this.state.records.find(r => ADIF.recordId(r) === id);
         if (!rec) return;
 
-        if (btn) {
-          const action = btn.dataset.action;
-          this.handleLogAction(action, rec);
-          return;
-        }
         // 点击行：切换详情
         this.state.expanded = (this.state.expanded === id) ? null : id;
         this.tabs.log();
@@ -132,35 +182,6 @@ const App = {
   debounceRender() {
     clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => this.tabs.log(), 250);
-  },
-
-  /* ------------------------------------------------------- 日志页操作 */
-  handleLogAction(action, rec) {
-    const today = Utils.todayAdif();
-    const next = { ...rec };
-    switch (action) {
-      case 'qsl-sent-y':  next.QSL_SENT = 'Y'; next.QSL_SENT_DATE = next.QSL_SENT_DATE || today; break;
-      case 'qsl-sent-q':  next.QSL_SENT = 'Q'; break;
-      case 'qsl-rcvd-y':  next.QSL_RCVD = 'Y'; next.QSL_RCVD_DATE = next.QSL_RCVD_DATE || today; break;
-      case 'qsl-rcvd-r':  next.QSL_RCVD = 'R'; break;
-      case 'qsl-clear-s': delete next.QSL_SENT; delete next.QSL_SENT_DATE; break;
-      case 'qsl-clear-r': delete next.QSL_RCVD; delete next.QSL_RCVD_DATE; break;
-      case 'edit': {
-        if (window.Entry) Entry.loadIntoForm(rec);
-        this.showTab('entry');
-        return;
-      }
-      case 'delete': {
-        if (confirm(I18N.t('deleteConfirm', { call: rec.CALL, date: rec.QSO_DATE }))) {
-          Store.remove(ADIF.recordId(rec));
-          this.refresh();
-        }
-        return;
-      }
-      default: return;
-    }
-    Store.upsert(next);
-    this.refresh();
   },
 
   /* ------------------------------------------------------------ 筛选派生 */
@@ -201,18 +222,27 @@ const App = {
     const years = distinct('QSO_DATE').map(d => d.slice(0, 4)).filter((v, i, a) => a.indexOf(v) === i).sort().reverse();
     const sel = (key) => this.state.filter[key];
 
+    const activeInput = document.activeElement;
+    const searchFocused = activeInput && activeInput.matches('#log-filters input[name="q"]');
+    const selection = searchFocused ? activeInput.selectionStart : null;
     document.getElementById('log-filters').innerHTML = `
-      <input type="search" name="q" placeholder="${Utils.esc(I18N.t('filterSearch'))}" value="${Utils.esc(sel('q'))}">
-      <select name="band"><option value="">${Utils.esc(I18N.t('allBands'))}</option>${distinct('BAND').map(b => `<option ${b === sel('band') ? 'selected' : ''}>${Utils.esc(b)}</option>`).join('')}</select>
-      <select name="mode"><option value="">${Utils.esc(I18N.t('allModes'))}</option>${distinct('MODE').map(m => `<option ${m === sel('mode') ? 'selected' : ''}>${Utils.esc(m)}</option>`).join('')}</select>
-      <select name="year"><option value="">${Utils.esc(I18N.t('allYears'))}</option>${years.map(y => `<option ${y === sel('year') ? 'selected' : ''}>${y}</option>`).join('')}</select>
-      <select name="country"><option value="">${Utils.esc(I18N.t('allCountries'))}</option>${distinct('COUNTRY').map(c => `<option ${c === sel('country') ? 'selected' : ''}>${Utils.esc(c)}</option>`).join('')}</select>
+      <label class="search-field"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><input type="search" name="q" aria-label="${Utils.esc(I18N.t('filterSearch'))}" placeholder="${Utils.esc(I18N.t('filterSearch'))}" value="${Utils.esc(sel('q'))}"></label>
+      <select name="band" aria-label="${Utils.esc(I18N.t('allBands'))}"><option value="">${Utils.esc(I18N.t('allBands'))}</option>${distinct('BAND').map(b => `<option ${b === sel('band') ? 'selected' : ''}>${Utils.esc(b)}</option>`).join('')}</select>
+      <select name="mode" aria-label="${Utils.esc(I18N.t('allModes'))}"><option value="">${Utils.esc(I18N.t('allModes'))}</option>${distinct('MODE').map(m => `<option ${m === sel('mode') ? 'selected' : ''}>${Utils.esc(m)}</option>`).join('')}</select>
+      <select name="year" aria-label="${Utils.esc(I18N.t('allYears'))}"><option value="">${Utils.esc(I18N.t('allYears'))}</option>${years.map(y => `<option ${y === sel('year') ? 'selected' : ''}>${y}</option>`).join('')}</select>
+      <select name="country" aria-label="${Utils.esc(I18N.t('allCountries'))}"><option value="">${Utils.esc(I18N.t('allCountries'))}</option>${distinct('COUNTRY').map(c => `<option ${c === sel('country') ? 'selected' : ''}>${Utils.esc(c)}</option>`).join('')}</select>
+      ${Object.values(this.state.filter).some(Boolean) ? `<button class="filter-reset" data-reset-filters>${Utils.esc(I18N.t('resetFilters'))}</button>` : ''}
       <span class="filter-count">${Utils.esc(I18N.t('filterCount', { n: total }))}</span>
     `;
 
+    if (searchFocused) {
+      const input = document.querySelector('#log-filters input[name="q"]');
+      input.focus();
+      if (selection !== null) input.setSelectionRange(selection, selection);
+    }
     const tbody = document.getElementById('log-body');
     if (slice.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" class="empty">${Utils.esc(I18N.t('logEmpty'))}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="empty">${Utils.esc(I18N.t(this.state.records.length ? 'noResults' : 'logEmpty'))}</td></tr>`;
     } else {
       tbody.innerHTML = slice.map(rec => {
         const id = ADIF.recordId(rec);
@@ -220,12 +250,12 @@ const App = {
         const detail = expanded ? this.renderDetail(rec, id) : '';
         return `
         <tr data-id="${Utils.esc(id)}" class="${expanded ? 'expanded' : ''}">
-          <td class="date">${Utils.esc(ADIF.prettyDate(rec.QSO_DATE))}</td>
-          <td class="call">${Utils.esc(rec.CALL || '—')}</td>
-          <td>${Utils.esc(rec.BAND || '—')}</td>
-          <td>${Utils.esc(rec.MODE || '—')}</td>
+          <td class="date">${Utils.esc(ADIF.prettyDate(rec.QSO_DATE))}<small>${Utils.esc(ADIF.prettyTime(rec.TIME_ON) || '—')} UTC</small></td>
+          <td class="call"><button class="record-toggle" aria-expanded="${expanded}" aria-label="${Utils.esc(I18N.t('openRecord', { call: rec.CALL || '—' }))}">${Utils.esc(rec.CALL || '—')}</button><small>${Utils.esc(rec.COUNTRY || '—')}</small></td>
+          <td><span class="band-tag">${Utils.esc(rec.BAND || '—')}</span></td>
+          <td><span class="mode-tag mode-${Utils.esc((rec.MODE || '').toLowerCase())}">${Utils.esc(rec.MODE || '—')}</span></td>
           <td class="rst">${Utils.esc(rec.RST_SENT || '—')} / ${Utils.esc(rec.RST_RCVD || '—')}</td>
-          <td>${Utils.esc(rec.GRIDSQUARE || '—')}</td>
+          <td class="grid-cell">${Utils.esc(rec.GRIDSQUARE || '—')}</td>
           <td>${Utils.badge(rec.QSL_SENT, false)}</td>
           <td>${Utils.badge(rec.QSL_RCVD, true)}</td>
         </tr>
@@ -236,6 +266,7 @@ const App = {
     // 分页
     const pager = document.getElementById('log-pager');
     pager.innerHTML = `
+      <span class="pager-summary">${Utils.esc(I18N.t('pagerRange', { from: total ? (page - 1) * pageSize + 1 : 0, to: Math.min(page * pageSize, total), n: total }))}</span>
       <button ${page <= 1 ? 'disabled' : ''} data-pg="prev">${Utils.esc(I18N.t('pagerPrev'))}</button>
       <span class="page-info">${Utils.esc(I18N.t('pagerInfo', { page, pages }))}</span>
       <button ${page >= pages ? 'disabled' : ''} data-pg="next">${Utils.esc(I18N.t('pagerNext'))}</button>
@@ -289,28 +320,11 @@ const App = {
       <div class="detail-grid">
         ${fields.map(([k, v]) => `<div class="detail-item"><span class="detail-key">${Utils.esc(k)}</span><span class="detail-val">${Utils.esc(v)}</span></div>`).join('')}
       </div>
-      <div class="detail-actions">
-        <button class="btn btn-sm" data-action="qsl-sent-y" ${sentY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkSent'))}</button>
-        <button class="btn btn-sm" data-action="qsl-sent-q" ${sentY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkQueue'))}</button>
-        <button class="btn btn-sm" data-action="qsl-rcvd-y" ${rcvdY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnMarkRcvd'))}</button>
-        <button class="btn btn-sm" data-action="qsl-rcvd-r" ${rcvdY ? 'disabled' : ''}>${Utils.esc(I18N.t('btnRequestCard'))}</button>
-        <button class="btn btn-sm" data-action="edit">${Utils.esc(I18N.t('btnEdit'))}</button>
-        <button class="btn btn-sm btn-danger" data-action="delete">${Utils.esc(I18N.t('btnDelete'))}</button>
-        <span class="detail-hint">${Utils.esc(I18N.t('detailHint'))}</span>
-      </div>`;
-  },
-
-  /* ------------------------------------------------------- 本地草稿徽标 */
-  updateLocalBadge() {
-    const c = Store.localChangeCount();
-    const badge = document.getElementById('local-badge');
-    const total = c.added + c.updated + c.deleted;
-    if (badge) {
-      badge.textContent = total > 0 ? I18N.t('localBadge', { n: total }) : '';
-      badge.classList.toggle('show', total > 0);
-    }
+      `;
   }
 };
 
 window.App = App;
 window.Utils = Utils;
+
+App.tabs.log = () => App.log();

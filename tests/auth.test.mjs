@@ -1,0 +1,34 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import worker from '../worker/src/index.mjs';
+import {digest} from '../worker/src/auth.mjs';
+import {database} from './helpers.mjs';
+
+test('Password setup, login, expiry, logout and attempt limits',async()=>{
+  const db=database(),env={DB:db,ADMIN_USERNAME:'BI9CKE',ADMIN_SETUP_HASH:await digest('single-use-setup')};
+  const origin='https://backend.example';
+  const request=(path,body,cookie='',customOrigin=origin)=>worker.fetch(new Request(origin+path,{method:body?'POST':'GET',headers:{Origin:customOrigin,'Content-Type':'application/json',Cookie:cookie,'CF-Connecting-IP':'192.0.2.1'},...(body?{body:JSON.stringify(body)}:{})}),env);
+  assert.equal((await(await request('/api/auth/status')).json()).configured,false);
+  assert.equal((await request('/api/auth/setup',{setupToken:'wrong',password:'valid-password-123'})).status,403);
+  assert.equal((await request('/api/auth/setup',{setupToken:'single-use-setup',password:'short'})).status,400);
+  assert.equal((await request('/api/auth/setup',{setupToken:'single-use-setup',password:'valid-password-123'},'','https://evil.example')).status,403);
+  const created=await request('/api/auth/setup',{setupToken:'single-use-setup',password:'valid-password-123'});
+  assert.equal(created.status,200);let cookie=created.headers.get('Set-Cookie').split(';')[0];
+  assert.equal((await(await request('/api/auth/status')).json()).configured,true);
+  const stored=await db.prepare('SELECT * FROM admin_credentials WHERE id=1').first();
+  assert.equal(stored.password_hash.length,64);assert.notEqual(stored.password_hash,'valid-password-123');
+  assert.equal((await request('/api/admin/session',null,cookie)).status,200);
+  assert.equal((await request('/api/auth/logout',{},cookie)).status,200);
+  assert.equal((await request('/api/admin/session',null,cookie)).status,401);
+  assert.equal((await request('/api/auth/login',{username:'BI9CKE',password:'incorrect'})).status,401);
+  assert.equal((await request('/api/auth/login',{username:'OTHER',password:'valid-password-123'})).status,401);
+  const login=await request('/api/auth/login',{username:'BI9CKE',password:'valid-password-123'});
+  assert.equal(login.status,200);cookie=login.headers.get('Set-Cookie').split(';')[0];
+  assert.equal((await request('/api/admin/session',null,cookie)).status,200);
+  await db.prepare('UPDATE admin_sessions SET expires_at=0').run();
+  assert.equal((await request('/api/admin/session',null,cookie)).status,401);
+  for(let i=0;i<10;i++) assert.equal((await request('/api/auth/login',{username:'BI9CKE',password:'incorrect'})).status,401);
+  assert.equal((await request('/api/auth/login',{username:'BI9CKE',password:'valid-password-123'})).status,429);
+  assert.equal((await worker.fetch(new Request(origin+'/api/auth/setup',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({setupToken:'single-use-setup',password:'valid-password-456'})}),{...env,DB:database(),ADMIN_SETUP_HASH:''})).status,403);
+  db.close();
+});

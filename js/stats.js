@@ -30,21 +30,23 @@ App.tabs.stats = (() => {
 
     if (typeof echarts === 'undefined') {
       el.querySelectorAll('.chart').forEach(c => { c.innerHTML = '<p class="empty">' + I18N.t('chartLoadFail') + '</p>'; });
-      return false;
+      return true;
     }
     const theme = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4a9eff';
-    const axisColor = 'rgba(160,170,190,0.55)';
+    const axisColor = '#81939d';
     const baseOpt = {
-      textStyle: { color: '#c8d0e0' },
-      grid: { left: 40, right: 16, top: 24, bottom: 28 },
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(20,26,40,0.92)', borderColor: '#2a3550', textStyle: { color: '#e8ecf5' } }
+      textStyle: { color: '#627f8e', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: 10 },
+      animationDuration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
+      color: ['#426b7e', '#dd956e', '#82a99a', '#b5a5c1', '#d7bc81', '#8db4be'],
+      grid: { left: 38, right: 15, top: 20, bottom: 28 },
+      tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#e3e9ec', textStyle: { color: '#3e5d6c', fontSize: 11 } }
     };
     charts.band = echarts.init(document.getElementById('chart-band'));
     charts.mode = echarts.init(document.getElementById('chart-mode'));
     charts.month = echarts.init(document.getElementById('chart-month'));
     charts.year = echarts.init(document.getElementById('chart-year'));
     charts.band.setOption({ ...baseOpt, tooltip: { ...baseOpt.tooltip, trigger: 'item' } });
-    charts.mode.setOption({ ...baseOpt, tooltip: { ...baseOpt.tooltip, trigger: 'item' }, legend: { textStyle: { color: '#a8b2c8' }, bottom: 0 } });
+    charts.mode.setOption({ ...baseOpt, tooltip: { ...baseOpt.tooltip, trigger: 'item' }, legend: { textStyle: { color: '#81939d' }, bottom: 0 } });
     charts.month.setOption({ ...baseOpt });
     charts.year.setOption({ ...baseOpt });
     charts.theme = theme;
@@ -66,7 +68,7 @@ App.tabs.stats = (() => {
 
   return function render() {
     const el = document.getElementById('page-stats');
-    if (!el) return;
+    if (!el || !el.classList.contains('active')) return;
     if (!initialized) {
       initialized = buildSkeleton();
       if (!initialized) return;
@@ -108,25 +110,27 @@ App.tabs.stats = (() => {
     num('sent').textContent = cardsSent;
     num('rcvd').textContent = cardsRcvd;
 
+    if (!charts.band) return;
+
     // ---------------------------------------------------------- 更新图表
     const theme = charts.theme, axisColor = charts.axisColor;
     const axis = { type: 'category', axisLabel: { color: axisColor } };
-    const valueAxis = { type: 'value', axisLabel: { color: axisColor }, splitLine: { lineStyle: { color: 'rgba(120,130,160,0.15)' } } };
+    const valueAxis = { type: 'value', minInterval: 1, axisLabel: { color: axisColor }, splitLine: { lineStyle: { color: 'rgba(120,130,160,0.15)' } } };
 
     charts.band.setOption({
       xAxis: { ...axis, data: bandData.map(d => d[0]) },
       yAxis: valueAxis,
       series: [{ type: 'bar', data: bandData.map(d => d[1]), itemStyle: { color: theme, borderRadius: [3, 3, 0, 0] }, barMaxWidth: 36 }]
-    }, true);
+    });
 
     charts.mode.setOption({
       series: [{
         type: 'pie', radius: ['38%', '66%'], center: ['50%', '46%'],
         data: modeData.map(d => ({ name: d[0], value: d[1] })),
-        label: { color: '#c8d0e0' },
-        itemStyle: { borderColor: '#12182a', borderWidth: 2 }
+        label: { color: '#627f8e', fontSize: 11 },
+        itemStyle: { borderColor: '#ffffff', borderWidth: 2 }
       }]
-    }, true);
+    });
 
     charts.month.setOption({
       xAxis: { ...axis, data: monthData.map(d => d[0]) },
@@ -136,14 +140,14 @@ App.tabs.stats = (() => {
         itemStyle: { color: theme }, lineStyle: { color: theme, width: 2 },
         areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: theme + '55' }, { offset: 1, color: theme + '00' }] } }
       }]
-    }, true);
+    });
 
     charts.year.setOption({
       xAxis: { ...axis, data: yearData.map(d => d[0]) },
       yAxis: valueAxis,
-      series: [{ type: 'bar', data: yearData.map(d => d[1]), itemStyle: { color: '#38c172', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 44 }]
-    }, true);
+      series: [{ type: 'bar', data: yearData.map(d => d[1]), itemStyle: { color: '#82a99a', borderRadius: [3, 3, 0, 0] }, barMaxWidth: 44 }]
+    });
 
-    resizeAll();
+    requestAnimationFrame(resizeAll);
   };
 })();

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#172c36">
+  <title>电台管理 · QSL Logbook</title>
+  <link rel="icon" href="/assets/favicon.svg"><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-body">
+  <div id="login-screen" class="login-screen">
+    <div class="login-card"><img src="/assets/favicon.svg" alt="" width="52" height="52"><div class="eyebrow">PRIVATE STATION CONSOLE</div><h1 id="login-title">电台管理</h1><p id="login-description">登录后管理通联记录与电台位置。</p><div id="login-status" class="login-status" role="status">正在验证登录状态…</div><form id="login-form" hidden><label>管理员账号<input id="login-username" name="username" autocomplete="username" required></label><label>密码<input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="128" required></label><label id="confirm-label" hidden>确认密码<input id="login-confirm" type="password" autocomplete="new-password" maxlength="128"></label><button id="login-button" type="submit" class="btn btn-primary">登录管理后台</button></form><a id="public-link" class="back-link" href="/">返回公开展示页 →</a></div>
+  </div>
+  <div id="admin-app" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="/"><img src="/assets/favicon.svg" width="34" height="34" alt=""><span>QSL<span class="brand-light"> console</span><small>PRIVATE STATION CONSOLE</small></span></a>
+      <div class="nav-label">管理工作台</div>
+      <nav class="nav-bar" aria-label="后台导航"><button class="nav-item active" data-admin-tab="records">通联记录</button><button class="nav-item" data-admin-tab="entry">新增通联</button><button class="nav-item" data-admin-tab="import">导入 / 导出</button><button class="nav-item" data-admin-tab="settings">电台设置</button></nav>
+      <div class="sidebar-note"><p>记录电波，连接世界。</p><span>PRIVATE · STATION ADMIN</span></div>
+    </aside>
+    <div class="app-shell">
+      <header class="site-header"><div class="breadcrumb">管理后台 <span>/</span><strong id="admin-current">通联记录</strong></div><div class="header-right"><span id="admin-user"></span><button class="logout-link" id="logout-button">退出登录</button></div></header>
+      <main>
+        <div class="page-heading"><div><div class="eyebrow">YOUR STATION, YOUR STORY</div><h1 id="admin-title">通联记录</h1><p id="admin-description">管理公开展示页中的通联信息。</p></div><button class="btn btn-primary" data-admin-tab="entry">＋ 新增通联</button></div>
+        <div id="admin-message" class="admin-message" role="status" hidden></div>
+        <section class="admin-section active" id="admin-records"><div class="log-panel"><div class="panel-heading"><div class="panel-title"><h2>全部通联</h2><span class="total-pill" id="admin-count">0</span></div><input type="search" id="admin-search" aria-label="搜索通联" placeholder="搜索呼号 / 国家 / 网格…"></div><div class="table-wrap"><table class="log-table"><thead><tr><th>日期 / UTC</th><th>呼号</th><th>波段 / 模式</th><th>定位</th><th>QSL 发 / 收</th><th>操作</th></tr></thead><tbody id="admin-log-body"></tbody></table></div><div class="pager"><span id="admin-range" class="pager-summary"></span><button id="admin-prev">上一页</button><span id="admin-page-info" class="page-info"></span><button id="admin-next">下一页</button></div></div></section>
+        <section class="admin-section" id="admin-entry"><div class="entry-form-card"><h2 id="record-form-title">新增通联</h2><form id="record-form"><div class="form-grid" id="record-fields"></div><div class="entry-actions"><button type="submit" class="btn btn-primary" id="record-save">保存通联</button><button type="button" class="btn" id="record-reset">新建另一条</button><span class="entry-hint">保存到数据库后，公开展示页读取最新数据。</span></div></form></div></section>
+        <section class="admin-section" id="admin-import"><div class="entry-grid"><div class="side-card"><h2>导入 ADIF</h2><p class="side-hint">支持常用日志软件导出的 .adi 文件。每批最多 1000 条、2 MB，导入前会验证整批数据。</p><label class="field-label" for="adif-file">选择文件</label><input type="file" id="adif-file" accept=".adi,.adif,.txt,text/plain"><label class="field-label" for="adif-text">或粘贴 ADIF 文本</label><textarea id="adif-text" rows="12" placeholder="<CALL:6>JA1XYZ … <EOR>"></textarea><label class="checkbox"><input type="checkbox" id="adif-merge">合并更新已存在的记录（默认跳过重复）</label><button id="adif-import" class="btn btn-primary">导入到数据库</button></div><div><div class="side-card"><h2>导出完整日志</h2><p class="side-hint">下载包含备注与完整 ADIF 字段的数据库备份。此导出接口仅限已登录管理员。</p><a class="btn" href="/api/admin/export">下载完整 ADIF</a></div><div class="side-card"><h2>QSL 卡片图片</h2><p class="side-hint">图片继续由 GitHub Pages 提供。将扫描图加入仓库的 qsl-cards/ 并登记 manifest.json，推送后更新相册。</p></div></div></div></section>
+        <section class="admin-section" id="admin-settings"><div class="entry-form-card settings-card"><h2>电台信息与地图位置</h2><p class="side-hint">保存的位置会显示在公开地图上。可以使用网格中心近似定位，无需填写家庭住址。若同时填写经纬度与网格，地图优先使用经纬度。</p><form id="settings-form"><div class="form-grid"><label>电台呼号 *<input name="call" required maxlength="30" autocomplete="off"></label><label>电台名称 *<input name="name" required maxlength="120"></label><label class="wide">Maidenhead 网格<input name="grid" placeholder="例如 OM89AA" maxlength="8" autocomplete="off"><small>支持 4、6 或 8 位；留空且不填经纬度时，不显示位置光点。</small></label><label>纬度（北正南负）<input name="lat" type="number" min="-90" max="90" step="any" placeholder="-90 ～ 90"></label><label>经度（东正西负）<input name="lon" type="number" min="-180" max="180" step="any" placeholder="-180 ～ 180"></label></div><p id="location-preview" class="location-preview"></p><p class="side-hint">橙色光点代表本台；最外层光圈使用最远已定位通联的大圆距离计算。没有网格或坐标的记录不参与距离排名。</p><div class="entry-actions"><button class="btn btn-primary" type="submit" id="settings-save">保存电台设置</button></div></form></div></section>
+      </main><footer class="site-footer"><span>QSL LOGBOOK · PRIVATE CONSOLE</span><span>Cloudflare Workers · D1</span></footer>
+    </div>
+  </div>
+  <script src="/js/adif.js"></script><script src="/js/geo.js"></script><script src="/admin/admin.js"></script>
+</body>
+</html>

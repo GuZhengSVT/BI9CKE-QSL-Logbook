@@ -12,7 +12,7 @@ const ADIF = (() => {
 
   // 按字节数截取子串，并返回被消费的 JS 字符串长度（UTF-16 code units）
   function sliceByBytes(text, start, byteLen) {
-    const sub = text.slice(start);
+    const sub = text.slice(start, start + byteLen);
     const bytes = encoder.encode(sub);
     const valueBytes = bytes.subarray(0, byteLen);
     return decoder.decode(valueBytes);
@@ -171,3 +171,5 @@ const ADIF = (() => {
 
   return { parse, serialize, recordId, normalize, mergeFields, qslStatusInfo, prettyDate, prettyTime, QSL_STATUS };
 })();
+
+globalThis.ADIF = ADIF;
