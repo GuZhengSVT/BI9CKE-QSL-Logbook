@@ -76,9 +76,10 @@ npm run dev
 
 使用 Workers Free 和 D1 Free 即可起步，无需开通 Zero Trust。当前部署地址：
 
-- 展示页：`https://www.guzhengsvt.cn/BI9CKE-QSL-Logbook/`
-- 后台：`https://bi9cke-qsl-backend.lvbowen040427.workers.dev/dashboard`
-- 公开接口：`https://bi9cke-qsl-backend.lvbowen040427.workers.dev/api/public`
+- 展示页：`https://bi9cke.guzhengsvt.cn/`
+- 后台：`https://bi9cke.guzhengsvt.cn/dashboard`
+- 公开接口：`https://bi9cke.guzhengsvt.cn/api/public`
+- 原 workers.dev 后台地址继续保留，数据与管理员账号共用。
 
 ### 1. 授权部署工具
 
@@ -114,7 +115,8 @@ Workers 默认提供 HTTPS 的 `workers.dev` 地址；也可另行绑定自己�
 
 | 配置 | 内容 |
 |---|---|
-| `PUBLIC_SITE_ORIGIN` | 展示站来源，例如 `https://www.guzhengsvt.cn`，不带路径 |
+| `PUBLIC_SITE_ORIGIN` | 展示站来源，当前为 `https://bi9cke.guzhengsvt.cn`，不带路径 |
+| `LEGACY_PUBLIC_SITE_ORIGIN` | 兼容旧展示站的只读跨域来源，当前为 `https://www.guzhengsvt.cn`；管理写入始终要求同源 |
 | `PUBLIC_SITE_URL` | 展示页完整地址，包含项目路径 |
 | `ADMIN_USERNAME` | 固定管理员登录账号，当前为 `BI9CKE`；电台呼号与此登录账号分别设置 |
 
@@ -173,10 +175,13 @@ dist/backend/                只上传 Cloudflare Workers 静态资源
 
 MIT
 
-### 自定义域名接入（待 DNS 托管完成）
+### 自定义域名与路由
 
-目标前台为 `https://bi9cke.guzhengsvt.cn/`，后台为同源 `/dashboard`。当前代码已支持 `/dashboard`、`/dashboard/login`、`/dashboard/setup`，旧 `/admin/` 仍可访问。后台资源位于 `/dashboard/static/`，避免与 GitHub Pages 的同名静态资源冲突，登录和数据接口仍位于 `/api/`。
+前台使用 `https://bi9cke.guzhengsvt.cn/`，后台使用同源 `/dashboard`。`/dashboard/login`、`/dashboard/setup` 和旧 workers.dev 的 `/admin/` 均继续支持。后台资源位于 `/dashboard/static/`，避免与 GitHub Pages 的同名静态资源冲突；登录、公开数据及管理接口位于 `/api/`。
 
-当前 guzhengsvt.cn 由阿里云 DNS 托管。使用 Cloudflare 免费方案实现同域名路径路由，需要先将完整 DNS 区域迁到 Cloudflare；域名购买和续费仍可保留阿里云。先对照导入现有记录（含邮件），检查 DNSSEC，再修改注册商 nameservers；未经核对，不切换整个域名的解析。
+guzhengsvt.cn 的 DNS 已托管到 Cloudflare。`bi9cke` 的 CNAME 指向 `guzhengsvt.github.io`，启用代理；本仓库 GitHub Pages 的自定义域名也设为 `bi9cke.guzhengsvt.cn`。两条 Worker 路由由 `worker/wrangler.jsonc` 管理：
 
-接入时只为 `bi9cke` 新增代理 CNAME 指向 `guzhengsvt.github.io`，将本仓库 GitHub Pages 的自定义域名设为 `bi9cke.guzhengsvt.cn`，并确保 GitHub 的 HTTPS 证书就绪。博客原有 `www` 和根域名记录保留。为本 Worker 配置 `bi9cke.guzhengsvt.cn/dashboard*` 与 `bi9cke.guzhengsvt.cn/api/*` 两条路由，公开静态页面继续由 GitHub Pages 提供。随后将 `PUBLIC_SITE_ORIGIN`、`PUBLIC_SITE_URL` 和前台 `apiBaseUrl` 改为新站点地址并重新部署。新主机名首次访问需要用原有账号密码重新登录，数据库与管理员密码不需要重建。
+- `bi9cke.guzhengsvt.cn/dashboard*`：管理页面和后台静态资源。
+- `bi9cke.guzhengsvt.cn/api/*`：公开数据、卫星资料、登录和管理接口。
+
+其余静态页面由 GitHub Pages 提供。博客根域名、`www` 与 Waline 的 DNS 记录分别保留。前台 `apiBaseUrl` 和 Worker 的 `PUBLIC_SITE_ORIGIN`、`PUBLIC_SITE_URL` 使用新域名；旧展示站来源仅保留只读 CORS 兼容。新主机名首次访问需要用原有账号密码重新登录，数据库与管理员密码无需重建。

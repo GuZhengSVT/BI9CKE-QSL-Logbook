@@ -5,6 +5,10 @@
   "main": "src/index.mjs",
   "compatibility_date": "2026-10-12",
   "workers_dev": true,
+  "routes": [
+    {"pattern":"bi9cke.guzhengsvt.cn/dashboard*","zone_name":"guzhengsvt.cn"},
+    {"pattern":"bi9cke.guzhengsvt.cn/api/*","zone_name":"guzhengsvt.cn"}
+  ],
   "assets": {
     "directory": "../dist/backend",
     "binding": "ASSETS",
@@ -18,8 +22,9 @@
     "migrations_dir": "migrations"
   }],
   "vars": {
-    "PUBLIC_SITE_ORIGIN": "https://www.guzhengsvt.cn",
-    "PUBLIC_SITE_URL": "https://www.guzhengsvt.cn/BI9CKE-QSL-Logbook/",
+    "PUBLIC_SITE_ORIGIN": "https://bi9cke.guzhengsvt.cn",
+    "PUBLIC_SITE_URL": "https://bi9cke.guzhengsvt.cn/",
+    "LEGACY_PUBLIC_SITE_ORIGIN": "https://www.guzhengsvt.cn",
     "ADMIN_USERNAME": "BI9CKE"
   }
 }

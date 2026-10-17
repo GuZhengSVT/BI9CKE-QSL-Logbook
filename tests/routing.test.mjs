@@ -12,3 +12,14 @@ test('Dashboard and legacy URLs serve the same shell with namespaced assets and 
   }
   assert.equal((await worker.fetch(new Request('https://radio.example/dashboard/static/admin/index.html'),env)).status,404);
 });
+test('Public CORS accepts both migration origins without allowing foreign origins',async()=>{
+  const env={PUBLIC_SITE_ORIGIN:'https://bi9cke.example',LEGACY_PUBLIC_SITE_ORIGIN:'https://www.example'};
+  for(const origin of [env.PUBLIC_SITE_ORIGIN,env.LEGACY_PUBLIC_SITE_ORIGIN]) {
+    const response=await worker.fetch(new Request('https://backend.example/api/public',{method:'OPTIONS',headers:{Origin:origin}}),env);
+    assert.equal(response.status,204);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
+    const error=await worker.fetch(new Request('https://backend.example/api/satellites/invalid',{headers:{Origin:origin}}),env);
+    assert.equal(error.status,400);assert.equal(error.headers.get('Access-Control-Allow-Origin'),origin);
+  }
+  const foreign=await worker.fetch(new Request('https://backend.example/api/satellites/invalid',{headers:{Origin:'https://foreign.example'}}),env);
+  assert.equal(foreign.headers.get('Access-Control-Allow-Origin'),null);
+});

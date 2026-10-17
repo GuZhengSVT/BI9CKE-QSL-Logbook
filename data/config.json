@@ -28,7 +28,7 @@
     "DSTAR",
     "C4FM"
   ],
-  "apiBaseUrl": "https://bi9cke-qsl-backend.lvbowen040427.workers.dev",
+  "apiBaseUrl": "https://bi9cke.guzhengsvt.cn",
   "station": {
     "grid": "",
     "lat": null,

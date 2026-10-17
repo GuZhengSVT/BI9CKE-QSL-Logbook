@@ -131,8 +131,10 @@ async function api(request, env) {
 export default {
   async fetch(request, env, ctx) {
     const url=new URL(request.url), isPublic=(['/api/public','/api/satellites'].includes(url.pathname)||/^\/api\/satellites\/[^/]+$/.test(url.pathname));
+    const origin=request.headers.get('Origin');
+    const publicOrigin=origin&&[env.PUBLIC_SITE_ORIGIN,env.LEGACY_PUBLIC_SITE_ORIGIN].includes(origin)?origin:null;
     try {
-      if(isPublic && request.method==='OPTIONS') return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':env.PUBLIC_SITE_ORIGIN,'Access-Control-Allow-Methods':'GET','Vary':'Origin'}});
+      if(isPublic && request.method==='OPTIONS') return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':publicOrigin||env.PUBLIC_SITE_ORIGIN,'Access-Control-Allow-Methods':'GET','Vary':'Origin'}});
       let response;
       if(url.pathname==='/api/satellites'&&request.method==='GET')response=await satelliteCatalog(request,ctx);
       else if(/^\/api\/satellites\/[^/]+$/.test(url.pathname)&&request.method==='GET')response=await satelliteInfo(request,ctx);
@@ -152,12 +154,12 @@ export default {
       headers.set('X-Content-Type-Options','nosniff');
       headers.set('Referrer-Policy','no-referrer');
       if((url.pathname.startsWith('/admin')||url.pathname.startsWith('/dashboard'))) {headers.set('Cache-Control','no-store');headers.set('X-Frame-Options','DENY');}
-      if(isPublic && request.headers.get('Origin')===env.PUBLIC_SITE_ORIGIN) {headers.set('Access-Control-Allow-Origin',env.PUBLIC_SITE_ORIGIN);headers.set('Vary','Origin');}
+      if(isPublic && publicOrigin) {headers.set('Access-Control-Allow-Origin',publicOrigin);headers.set('Vary','Origin');}
       return new Response(response.body,{status:response.status,headers});
     } catch(error) {
       if(!error.status) console.error('Backend failure',error);
       const response=json({error:error.status?error.message:'服务暂时不可用。'},error.status||500);
-      if(isPublic && request.headers.get('Origin')===env.PUBLIC_SITE_ORIGIN) response.headers.set('Access-Control-Allow-Origin',env.PUBLIC_SITE_ORIGIN);
+      if(isPublic && publicOrigin) {response.headers.set('Access-Control-Allow-Origin',publicOrigin);response.headers.set('Vary','Origin');}
       return response;
     }
   }
