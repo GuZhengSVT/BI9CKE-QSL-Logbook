@@ -1,6 +1,7 @@
 import { auth, verifySession, HttpError } from './auth.mjs';
 import {satelliteCatalog} from './satellites.mjs';
 import {satelliteInfo} from './satellite-info.mjs';
+import {solarConditions} from './solar.mjs';
 import '../../js/adif.js';
 import '../../js/geo.js';
 const ADIF = globalThis.ADIF, Geo = globalThis.QslGeo;
@@ -130,13 +131,14 @@ async function api(request, env) {
 }
 export default {
   async fetch(request, env, ctx) {
-    const url=new URL(request.url), isPublic=(['/api/public','/api/satellites'].includes(url.pathname)||/^\/api\/satellites\/[^/]+$/.test(url.pathname));
+    const url=new URL(request.url), isPublic=(['/api/public','/api/satellites','/api/solar'].includes(url.pathname)||/^\/api\/satellites\/[^/]+$/.test(url.pathname));
     const origin=request.headers.get('Origin');
     const publicOrigin=origin&&[env.PUBLIC_SITE_ORIGIN,env.LEGACY_PUBLIC_SITE_ORIGIN].includes(origin)?origin:null;
     try {
       if(isPublic && request.method==='OPTIONS') return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':publicOrigin||env.PUBLIC_SITE_ORIGIN,'Access-Control-Allow-Methods':'GET','Vary':'Origin'}});
       let response;
-      if(url.pathname==='/api/satellites'&&request.method==='GET')response=await satelliteCatalog(request,ctx);
+      if(url.pathname==='/api/solar'&&request.method==='GET')response=await solarConditions(request,ctx);
+      else if(url.pathname==='/api/satellites'&&request.method==='GET')response=await satelliteCatalog(request,ctx);
       else if(/^\/api\/satellites\/[^/]+$/.test(url.pathname)&&request.method==='GET')response=await satelliteInfo(request,ctx);
       else if(url.pathname.startsWith('/api/')) response=await api(request,env);
       else if(['/dashboard','/dashboard/','/dashboard/login','/dashboard/setup','/admin','/admin/','/admin/login','/admin/setup'].includes(url.pathname)) {
@@ -144,11 +146,11 @@ export default {
       } else if(url.pathname==='/') return Response.redirect(env.PUBLIC_SITE_URL,302);
       else if(url.pathname.startsWith('/dashboard/static/')) {
         const assetPath=url.pathname.slice('/dashboard/static'.length);
-        if(!/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|satellite-tools|satellite-worker)\.js|css\/(?:style|satellites)\.css|assets\/[^/]+)$/.test(assetPath))throw new HttpError(404,'页面不存在。');
+        if(!/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|solar|satellite-tools|satellite-worker)\.js|css\/(?:style|solar|satellites)\.css|assets\/[^/]+)$/.test(assetPath))throw new HttpError(404,'页面不存在。');
         const assetUrl=new URL(request.url);assetUrl.pathname=assetPath;
         response=await env.ASSETS.fetch(new Request(assetUrl,request));
       }
-      else if(/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|satellite-tools|satellite-worker)\.js|css\/(?:style|satellites)\.css|assets\/[^/]+)$/.test(url.pathname)) response=await env.ASSETS.fetch(request);
+      else if(/^\/(?:admin\/admin\.(?:js|css)|js\/(?:adif|geo|theme|insights|solar|satellite-tools|satellite-worker)\.js|css\/(?:style|solar|satellites)\.css|assets\/[^/]+)$/.test(url.pathname)) response=await env.ASSETS.fetch(request);
       else throw new HttpError(404,'页面不存在。');
       const headers=new Headers(response.headers);
       headers.set('X-Content-Type-Options','nosniff');

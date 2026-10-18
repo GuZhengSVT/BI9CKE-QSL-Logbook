@@ -3,8 +3,8 @@ import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import '../js/adif.js';
 const ADIF=globalThis.ADIF;
-const publicFiles=['index.html','css/style.css','css/satellites.css','js/theme.js','js/i18n.js','js/adif.js','js/geo.js','js/store.js','js/app.js','js/map.js','js/stats.js','js/cards.js','assets','vendor','qsl-cards'];
-const backendFiles=['admin','css/style.css','css/satellites.css','js/theme.js','js/insights.js','js/adif.js','js/geo.js','assets/favicon.svg','assets/world-land-dots.json'];
+const publicFiles=['index.html','css/style.css','css/satellites.css','css/solar.css','js/solar.js','js/theme.js','js/i18n.js','js/adif.js','js/geo.js','js/store.js','js/app.js','js/map.js','js/stats.js','js/cards.js','assets','vendor','qsl-cards'];
+const backendFiles=['admin','css/style.css','css/satellites.css','css/solar.css','js/solar.js','js/theme.js','js/insights.js','js/adif.js','js/geo.js','assets/favicon.svg','assets/world-land-dots.json'];
 await rm('dist',{recursive:true,force:true});
 for(const [directory,files] of [['dist/public',publicFiles],['dist/backend',backendFiles]]) {
   for(const file of files) {

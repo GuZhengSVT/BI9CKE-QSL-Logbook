@@ -12,7 +12,7 @@ const I18N = (() => {
   const messages = {
     /* ============================================================ 中文 */
     'zh-CN': {
-      navSatellites:'卫星工具',satellitesDescription:'追踪轨道，等待下一次来自太空的回应。',satelliteName:'卫星名称',propagationMode:'传播方式',
+      navSolar:'传播状况',solarDescription:'读懂太阳的信号，寻找下一次远方通联的窗口。',navSatellites:'卫星工具',satellitesDescription:'追踪轨道，等待下一次来自太空的回应。',satelliteName:'卫星名称',propagationMode:'传播方式',
     themeSystem:'跟随系统',themeLight:'浅色模式',themeDark:'深色模式',
       mapLoadFailed: '地图暂时无法加载。', adminLogin: '电台管理', liveUnavailable: '实时日志暂不可用，当前展示仓库中的静态副本。',
       mapNeedsStation: '电台位置暂未公开。',
@@ -155,7 +155,7 @@ const I18N = (() => {
 
     /* ============================================================ English */
     'en': {
-      navSatellites:'Satellite tools',satellitesDescription:'Follow the orbit. Plan your next contact through space.',satelliteName:'Satellite',propagationMode:'Propagation mode',
+      navSolar:'Propagation',solarDescription:'Read the solar signals. Find your next window to the world.',navSatellites:'Satellite tools',satellitesDescription:'Follow the orbit. Plan your next contact through space.',satelliteName:'Satellite',propagationMode:'Propagation mode',
       themeSystem:'System theme',themeLight:'Light mode',themeDark:'Dark mode',
       mapLoadFailed: 'Map temporarily unavailable.', adminLogin: 'Station admin', liveUnavailable: 'Live data is unavailable. Showing the repository snapshot.',
       mapNeedsStation: 'Station location has not been published.',

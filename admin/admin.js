@@ -22,13 +22,15 @@ const Admin = {
     const element=document.getElementById('admin-message'); element.hidden=false; element.textContent=text; element.classList.toggle('error',error);
   },
   tab(name) {
-    const labels={dashboard:['电台仪表盘','每一次呼叫，都让世界更近一点。'],satellites:['卫星工具','追踪轨道，等待下一次来自太空的回应。'],qsl:['QSL 管理','整理待寄卡片，记录来自远方的确认。'],records:['通联记录','组合筛选与导出，快速找到每一次通联。'],entry:['新增通联','记录每一次相遇，保存后更新展示页。'],import:['导入 / 导出','导入标准 ADIF，或下载完整数据备份。'],settings:['电台设置','设置呼号，以及地图上代表本台的位置。']};
+    const labels={solar:['传播状况','读懂太阳的信号，寻找下一次远方通联的窗口。'],dashboard:['电台仪表盘','每一次呼叫，都让世界更近一点。'],satellites:['卫星工具','追踪轨道，等待下一次来自太空的回应。'],qsl:['QSL 管理','整理待寄卡片，记录来自远方的确认。'],records:['通联记录','组合筛选与导出，快速找到每一次通联。'],entry:['新增通联','记录每一次相遇，保存后更新展示页。'],import:['导入 / 导出','导入标准 ADIF，或下载完整数据备份。'],settings:['电台设置','设置呼号，以及地图上代表本台的位置。']};
     document.querySelectorAll('.admin-section').forEach(el=>el.classList.toggle('active',el.id==='admin-'+name));
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.adminTab===name));
     document.getElementById('admin-title').textContent=labels[name][0];document.getElementById('admin-current').textContent=labels[name][0];document.getElementById('admin-description').textContent=labels[name][1];
     if(name==='satellites'&&!this.satelliteTools)this.satelliteTools=QslSat.mount(document.getElementById('admin-satellites'),{apiBaseUrl:location.origin,station:this.config.station,onLog: name=>{
       this.resetForm();this.tab('entry');const form=document.getElementById('record-form');form.elements.SAT_NAME.value=name;form.elements.PROP_MODE.value='SAT';document.getElementById('entry-now').click();form.elements.CALL.focus();
     }});
+    if(name==='solar'&&!this.solarPanel)this.solarPanel=QslSolar.mount(document.getElementById('admin-solar'),{apiBaseUrl:location.origin,languageSwitch:true});
+    this.solarPanel?.setActive(name==='solar');
     this.satelliteTools?.setActive(name==='satellites');
     document.querySelector('[data-admin-tab=entry].sidebar-action')?.classList.toggle('active',name==='entry');
     window.scrollTo(0,0);

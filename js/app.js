@@ -96,20 +96,21 @@ const App = {
     const fn = this.tabs[name];
     if (fn) fn();
     this.satelliteTools?.setActive(name==='satellites');
+    this.solarPanel?.setActive(name==='solar');
     window.scrollTo(0, 0);
   },
 
   updatePageHeading() {
     const name = this.state.activeTab;
-    const key = { log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[name];
+    const key = { log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites',solar:'navSolar' }[name];
     document.getElementById('page-title').textContent = I18N.t(key);
     document.getElementById('current-page').textContent = I18N.t(key);
     document.getElementById('page-description').textContent = I18N.t(name + 'Description');
     document.querySelectorAll('.nav-item').forEach(el => {
-      el.setAttribute('title', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[el.dataset.tab]));
+      el.setAttribute('title', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites',solar:'navSolar' }[el.dataset.tab]));
     });
     document.querySelectorAll('.tab-page').forEach(el => {
-      el.setAttribute('aria-label', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites' }[el.id.slice(5)]));
+      el.setAttribute('aria-label', I18N.t({ log: 'navLog', stats: 'navStats', qsl: 'navQsl', entry: 'navEntry', cards: 'navCards',satellites:'navSatellites',solar:'navSolar' }[el.id.slice(5)]));
     });
   },
 
@@ -336,4 +337,10 @@ App.tabs.satellites=()=>{
   const el=document.getElementById('page-satellites');if(!el.classList.contains('active'))return;
   if(!App.satelliteTools)App.satelliteTools=QslSat.mount(el,{apiBaseUrl:App.state.config.apiBaseUrl,station:App.state.config.station,language:I18N.getLang()});
   else App.satelliteTools.setLanguage(I18N.getLang());
+};
+
+App.tabs.solar=()=>{
+  const el=document.getElementById('page-solar');if(!el.classList.contains('active'))return;
+  if(!App.solarPanel)App.solarPanel=QslSolar.mount(el,{apiBaseUrl:App.state.config.apiBaseUrl,language:I18N.getLang()});
+  else App.solarPanel.setLanguage(I18N.getLang());
 };
