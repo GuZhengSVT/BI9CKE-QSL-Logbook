@@ -12,7 +12,7 @@ const I18N = (() => {
   const messages = {
     /* ============================================================ 中文 */
     'zh-CN': {
-      navSolar:'传播状况',solarDescription:'读懂太阳的信号，寻找下一次远方通联的窗口。',navSatellites:'卫星工具',satellitesDescription:'追踪轨道，等待下一次来自太空的回应。',satelliteName:'卫星名称',propagationMode:'传播方式',
+      navSolar:'传播状况',solarDescription:'太阳活动、地磁指标与 HF / VHF 传播状况。',navSatellites:'卫星工具',satellitesDescription:'实时轨迹、过境预报与多普勒频移。',satelliteName:'卫星名称',propagationMode:'传播方式',
     themeSystem:'跟随系统',themeLight:'浅色模式',themeDark:'深色模式',
       mapLoadFailed: '地图暂时无法加载。', adminLogin: '电台管理', liveUnavailable: '实时日志暂不可用，当前展示仓库中的静态副本。',
       mapNeedsStation: '电台位置暂未公开。',
@@ -155,7 +155,7 @@ const I18N = (() => {
 
     /* ============================================================ English */
     'en': {
-      navSolar:'Propagation',solarDescription:'Read the solar signals. Find your next window to the world.',navSatellites:'Satellite tools',satellitesDescription:'Follow the orbit. Plan your next contact through space.',satelliteName:'Satellite',propagationMode:'Propagation mode',
+      navSolar:'Propagation',solarDescription:'Solar activity, geomagnetic indices and HF / VHF conditions.',navSatellites:'Satellite tools',satellitesDescription:'Live ground tracks, pass predictions and Doppler shifts.',satelliteName:'Satellite',propagationMode:'Propagation mode',
       themeSystem:'System theme',themeLight:'Light mode',themeDark:'Dark mode',
       mapLoadFailed: 'Map temporarily unavailable.', adminLogin: 'Station admin', liveUnavailable: 'Live data is unavailable. Showing the repository snapshot.',
       mapNeedsStation: 'Station location has not been published.',

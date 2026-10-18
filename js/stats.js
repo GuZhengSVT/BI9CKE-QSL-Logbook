@@ -36,11 +36,11 @@ App.tabs.stats = (() => {
     const theme = css.getPropertyValue('--accent').trim();
     const axisColor = css.getPropertyValue('--muted').trim();
     const baseOpt = {
-      textStyle: { color: axisColor, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: 10 },
+      textStyle: { color: axisColor, fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', fontSize: 12 },
       animationDuration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
       color: ['#426b7e', '#dd956e', '#82a99a', '#b5a5c1', '#d7bc81', '#8db4be'],
       grid: { left: 38, right: 15, top: 20, bottom: 28 },
-      tooltip: { trigger: 'axis', backgroundColor: css.getPropertyValue('--card').trim(), borderColor: css.getPropertyValue('--border').trim(), textStyle: { color: css.getPropertyValue('--text').trim(), fontSize: 11 } }
+      tooltip: { trigger: 'axis', backgroundColor: css.getPropertyValue('--card').trim(), borderColor: css.getPropertyValue('--border').trim(), textStyle: { color: css.getPropertyValue('--text').trim(), fontSize: 12 } }
     };
     charts.band = echarts.init(document.getElementById('chart-band'));
     charts.mode = echarts.init(document.getElementById('chart-mode'));
@@ -130,7 +130,7 @@ App.tabs.stats = (() => {
       series: [{
         type: 'pie', radius: ['38%', '66%'], center: ['50%', '46%'],
         data: modeData.map(d => ({ name: d[0], value: d[1] })),
-        label: { color: axisColor, fontSize: 11 },
+        label: { color: axisColor, fontSize: 12 },
         itemStyle: { borderColor: card, borderWidth: 2 }
       }]
     });

@@ -3,8 +3,8 @@
 export const profiles={
   25544:{
     aliases:'International Space Station · 国际空间站 · ZARYA · RS0ISS · NA1SS',operator:'ARISS · 国际空间站业余无线电项目',
-    zh:{intro:'国际空间站上的业余无线电项目，支持跨段中继、分组通信、航天员语音与活动期间的慢扫描电视。不同载荷的工作模式会随任务安排切换。',schedule:'航天员语音通联没有固定时刻；中继、APRS 与 SSTV 的实际安排以 ARISS 公告为准。过境时段表示几何可见，并不代表载荷已开启。',notes:'跨段 FM 中继：上行 145.990 MHz，CTCSS 67 Hz；下行 437.800 MHz。APRS 常用 145.825 MHz，1200 baud。'},
-    en:{intro:'Amateur Radio on the International Space Station supports cross-band FM, packet radio, crew voice contacts and scheduled SSTV events. Payload modes change with mission operations.',schedule:'Crew voice contacts are unscheduled. Check ARISS announcements for repeater, APRS and SSTV availability; a predicted pass only describes geometric visibility.',notes:'FM repeater: 145.990 MHz uplink with 67 Hz CTCSS; 437.800 MHz downlink. VHF APRS uses 145.825 MHz at 1200 baud.'},
+    zh:{intro:'国际空间站上的业余无线电项目，支持跨段中继、分组通信、航天员语音与活动期间的慢扫描电视。不同载荷的工作模式会随任务安排切换。',schedule:'航天员语音通联没有固定时刻；中继、APRS 与 SSTV 的实际安排以 ARISS 公告为准。',notes:'跨段 FM 中继：上行 145.990 MHz，CTCSS 67 Hz；下行 437.800 MHz。APRS 常用 145.825 MHz，1200 baud。'},
+    en:{intro:'Amateur Radio on the International Space Station supports cross-band FM, packet radio, crew voice contacts and scheduled SSTV events. Payload modes change with mission operations.',schedule:'Crew voice contacts are unscheduled. Check ARISS announcements for repeater, APRS and SSTV availability.',notes:'FM repeater: 145.990 MHz uplink with 67 Hz CTCSS; 437.800 MHz downlink. VHF APRS uses 145.825 MHz at 1200 baud.'},
     sources:[['ARISS · Frequencies','https://www.ariss.org/contact-the-iss.html'],['ARISS · Current status','https://www.ariss.org/current-status-of-iss-stations.html']],checked:'2026-10-18'
   },
   27607:{
