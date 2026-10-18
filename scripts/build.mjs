@@ -32,7 +32,7 @@ await writeFile('dist/public/data/log.adi',ADIF.serialize(records,{header:{ADIF_
 // Content hashes prevent old JS/CSS from mixing with new navigation markup.
 for(const [dir,file] of [['dist/public','index.html'],['dist/backend','admin/index.html']]) {
   let html=await readFile(`${dir}/${file}`,'utf8');
-  for(const match of [...html.matchAll(/(?:src|href)="((?:\/dashboard\/static\/|\/)?(?:js|css|admin)\/[^"?]+\.(?:js|css))(?:\?[^\"]*)?"/g)]) {
+  for(const match of [...html.matchAll(/(?:src|href)="((?:\/dashboard\/static\/|\/)?(?:js|css|admin|vendor)\/[^"?]+\.(?:js|css))(?:\?[^\"]*)?"/g)]) {
     const path=match[1].replace(/^\/dashboard\/static\//,'').replace(/^\//,'');
     const hash=createHash('sha256').update(await readFile(`${dir}/${path}`)).digest('hex').slice(0,12);
     html=html.replace(match[0],match[0].replace(/=".*"$/,`="${match[1]}?v=${hash}"`));

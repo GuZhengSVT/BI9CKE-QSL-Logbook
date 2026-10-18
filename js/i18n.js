@@ -84,7 +84,9 @@ const I18N = (() => {
       statConfirmed: '已确认（QSL/LoTW）', statSent: 'QSL 已寄出', statRcvd: 'QSL 已收到',
       chartBand: '按波段分布', chartMode: '按模式分布',
       chartMonth: '每月通联数', chartYear: '按年份通联数',
-      chartLoadFail: '图表库未加载',
+      chartLoadFail: '图表加载失败，请重新进入统计页重试。',
+      chartsLoading: '正在加载图表…',
+      logsLoading: '正在加载通联数据，页面导航已可使用。',
 
       qslSummaryConfirmed: '已确认', qslSummaryToSend: '待发出', qslSummaryToRcvd: '待收到',
       qslSummaryOverdue: '寄出超时(>{n}天未收到)',
@@ -227,7 +229,9 @@ const I18N = (() => {
       statConfirmed: 'Confirmed (QSL/LoTW)', statSent: 'QSL Cards Sent', statRcvd: 'QSL Cards Rcvd',
       chartBand: 'QSOs by Band', chartMode: 'QSOs by Mode',
       chartMonth: 'QSOs per Month', chartYear: 'QSOs per Year',
-      chartLoadFail: 'Chart library not loaded',
+      chartLoadFail: 'Charts could not be loaded. Reopen this page to retry.',
+      chartsLoading: 'Loading charts…',
+      logsLoading: 'Loading contacts. Page navigation is ready.',
 
       qslSummaryConfirmed: 'Confirmed', qslSummaryToSend: 'To Send', qslSummaryToRcvd: 'To Receive',
       qslSummaryOverdue: 'Overdue (>{n}d no reply)',

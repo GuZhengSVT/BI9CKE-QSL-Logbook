@@ -35,17 +35,18 @@ const App = {
     pageSize: 25,
     expanded: null,       // 展开详情的 record id
     activeTab: 'log',
+    loading: true,
     config: {}
   },
 
   tabs: {},               // 各模块注册 {name: renderFn}
 
   async init() {
-    this.state.config = await Store.loadConfig();
     this.bindEvents();
-    this.updateSiteHeader();
-    await this.refresh();
     this.showTab(location.hash ? location.hash.slice(1) : 'log');
+    this.updateSiteHeader();
+    this.state.config = await Store.loadConfig();
+    await this.refresh();
   },
 
   /* ------------------------------------------------------ 站点标题（随语言） */
@@ -60,20 +61,21 @@ const App = {
     admin.hidden = !cfg.apiBaseUrl;
     if (cfg.apiBaseUrl) admin.href = new URL('/dashboard', cfg.apiBaseUrl).href;
     const status = document.getElementById('data-status');
-    status.hidden = !Store.isFallback();
-    status.textContent = I18N.t('liveUnavailable');
+    status.hidden = !this.state.loading && !Store.isFallback();
+    status.textContent = I18N.t(this.state.loading ? 'logsLoading' : 'liveUnavailable');
   },
 
   /* ------------------------------------------------------------- 数据刷新 */
   async refresh() {
     this.state.records = await Store.getRecords();
+    this.state.loading = false;
+    this.updateSiteHeader();
     this.renderAllTabs();
   },
 
   renderAllTabs() {
-    for (const fn of Object.values(this.tabs)) {
-      try { fn(); } catch (e) { console.error('render error:', e); }
-    }
+    if (this.state.loading) return;
+    try { this.tabs[this.state.activeTab]?.(); } catch (e) { console.error('render error:', e); }
 
     this.renderOverview();
     StationMap.render(this.state.config, this.state.records);
@@ -94,7 +96,7 @@ const App = {
     });
     if (history.replaceState) history.replaceState(null, '', '#' + name);
     const fn = this.tabs[name];
-    if (fn) fn();
+    if (fn && !this.state.loading) fn();
     this.satelliteTools?.setActive(name==='satellites');
     this.solarPanel?.setActive(name==='solar');
     window.scrollTo(0, 0);

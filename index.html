@@ -76,7 +76,7 @@
   </div>
   <script src="js/solar.js"></script>
   <script src="js/satellite-tools.js"></script>
-  <script src="vendor/echarts.min.js"></script>
+  <template id="chart-library"><script src="vendor/echarts.min.js"></script></template>
   <script src="js/i18n.js"></script><script src="js/adif.js"></script><script src="js/geo.js"></script><script src="js/store.js"></script><script src="js/app.js"></script><script src="js/map.js"></script><script src="js/stats.js"></script><script src="js/cards.js"></script>
   <script>
     document.getElementById('lang-switch').value = I18N.getLang();
@@ -85,6 +85,8 @@
     I18N.applyStatic();
     App.init().catch(err => {
       console.error(err);
+      App.state.loading = false;
+      document.getElementById('data-status').hidden = true;
       document.getElementById('page-log').classList.add('active');
       document.getElementById('log-body').innerHTML = '<tr><td colspan="8" class="empty">' + Utils.esc(I18N.t('initFail', { msg: err.message })) + '</td></tr>';
     });

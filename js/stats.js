@@ -1,13 +1,14 @@
 /* ============================================================================
  * stats.js — 统计页（总览卡片 + ECharts 图表）
  * 骨架 DOM 只构建一次；每次切到本页仅更新数据并 resize（避免隐藏容器 0 尺寸 / 实例堆积）
- * 依赖: i18n.js, adif.js, store.js, app.js, vendor/echarts.min.js
+ * 依赖: i18n.js, adif.js, store.js, app.js；首次打开时加载 ECharts
  * 注册到 App.tabs.stats
  * ==========================================================================*/
 'use strict';
 
 App.tabs.stats = (() => {
   let initialized = false;
+  let loadingLibrary = false;
   const charts = {};
 
   function buildSkeleton() {
@@ -28,10 +29,6 @@ App.tabs.stats = (() => {
         <div class="chart-box wide"><h3 data-i18n="chartYear"></h3><div id="chart-year" class="chart"></div></div>
       </div>`;
 
-    if (typeof echarts === 'undefined') {
-      el.querySelectorAll('.chart').forEach(c => { c.innerHTML = '<p class="empty">' + I18N.t('chartLoadFail') + '</p>'; });
-      return true;
-    }
     const css=getComputedStyle(document.documentElement);
     const theme = css.getPropertyValue('--accent').trim();
     const axisColor = css.getPropertyValue('--muted').trim();
@@ -70,6 +67,22 @@ App.tabs.stats = (() => {
   return function render() {
     const el = document.getElementById('page-stats');
     if (!el || !el.classList.contains('active')) return;
+    if (typeof echarts === 'undefined') {
+      if (!loadingLibrary) {
+        loadingLibrary = true;
+        const script = document.createElement('script');
+        script.src = document.getElementById('chart-library').content.querySelector('script').getAttribute('src');
+        script.onload = () => { loadingLibrary = false; render(); };
+        script.onerror = () => {
+          loadingLibrary = false;
+          script.remove();
+          el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('chartLoadFail')) + '</p>';
+        };
+        document.head.append(script);
+      }
+      el.innerHTML = '<p class="empty">' + Utils.esc(I18N.t('chartsLoading')) + '</p>';
+      return;
+    }
     if (!initialized) {
       initialized = buildSkeleton();
       if (!initialized) return;

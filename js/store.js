@@ -6,7 +6,7 @@ const Store = (() => {
   const publicRecord = record => Object.fromEntries(FIELDS.filter(key => record[key] != null).map(key => [key, record[key]]));
   async function load() {
     if (snapshot) return snapshot;
-    bootstrap = bootstrap || fetch('data/config.json', {cache:'no-cache'}).then(r => {
+    bootstrap = bootstrap || fetch('data/config.json', {cache:'no-cache', signal:AbortSignal.timeout(8_000)}).then(r => {
       if (!r.ok) throw new Error('无法读取站点配置');
       return r.json();
     });
@@ -14,7 +14,7 @@ const Store = (() => {
     if (local.apiBaseUrl) {
       try {
         const url = new URL('/api/public', local.apiBaseUrl);
-        const res = await fetch(url, {credentials:'omit', cache:'no-cache'});
+        const res = await fetch(url, {credentials:'omit', cache:'no-cache', signal:AbortSignal.timeout(8_000)});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!Array.isArray(data.records) || !data.config) throw new Error('Invalid public snapshot');
@@ -22,7 +22,7 @@ const Store = (() => {
         return snapshot;
       } catch (error) { fallback = true; console.warn('Live log unavailable; using repository snapshot.', error.message); }
     }
-    const res = await fetch('data/log.adi', {cache:'no-cache'});
+    const res = await fetch('data/log.adi', {cache:'no-cache', signal:AbortSignal.timeout(8_000)});
     if (!res.ok) throw new Error('无法读取通联日志');
     snapshot = { config: local, records: ADIF.parse(await res.text()).records.map(ADIF.normalize).map(publicRecord) };
     return snapshot;
