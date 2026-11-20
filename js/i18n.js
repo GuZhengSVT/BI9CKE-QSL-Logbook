@@ -86,6 +86,7 @@ const I18N = (() => {
       chartMonth: '每月通联数', chartYear: '按年份通联数',
       chartLoadFail: '图表加载失败，请重新进入统计页重试。',
       chartsLoading: '正在加载图表…',
+      satelliteLoading: '正在加载卫星工具…', satelliteLoadFailed: '卫星工具加载失败，请重新打开此页重试。',
       logsLoading: '正在加载通联数据，页面导航已可使用。',
 
       qslSummaryConfirmed: '已确认', qslSummaryToSend: '待发出', qslSummaryToRcvd: '待收到',
@@ -231,6 +232,7 @@ const I18N = (() => {
       chartMonth: 'QSOs per Month', chartYear: 'QSOs per Year',
       chartLoadFail: 'Charts could not be loaded. Reopen this page to retry.',
       chartsLoading: 'Loading charts…',
+      satelliteLoading: 'Loading satellite tools…', satelliteLoadFailed: 'Satellite tools could not be loaded. Reopen this tab to retry.',
       logsLoading: 'Loading contacts. Page navigation is ready.',
 
       qslSummaryConfirmed: 'Confirmed', qslSummaryToSend: 'To Send', qslSummaryToRcvd: 'To Receive',

@@ -24,7 +24,7 @@ function validateRecord(raw) {
   if (record.TIME_ON && !/^(?:[01]\d|2[0-3])[0-5]\d(?:[0-5]\d)?$/.test(record.TIME_ON)) throw new HttpError(400, 'UTC 时间无效。');
   if (record.GRIDSQUARE && !Geo.gridCenter(record.GRIDSQUARE)) throw new HttpError(400, '通联网格无效。');
   if ((record.LAT || record.LON) && (Geo.coordinate(record.LAT,true) === null || Geo.coordinate(record.LON,false) === null)) throw new HttpError(400, '经纬度需要成对填写且范围有效。');
-  return record;
+  return ADIF.standardDates(record);
 }
 function validateConfig(raw, previous) {
   if (!raw || typeof raw.call !== 'string' || !raw.call.trim() || typeof raw.name !== 'string' || raw.call.length>30 || raw.name.length>120) throw new HttpError(400,'请填写有效的呼号和电台名称。');
@@ -41,13 +41,74 @@ async function config(db) {
   if (!row) throw new HttpError(503,'数据库尚未初始化，请先运行 D1 migrations。');
   return JSON.parse(row.value);
 }
+const recordOrder = "ORDER BY qso_date DESC, coalesce(json_extract(data, '$.TIME_ON'), '') DESC, id";
+
 async function records(db) {
-  const rows = await db.prepare('SELECT data FROM records ORDER BY qso_date DESC, id').all();
-  return rows.results.map(row=>JSON.parse(row.data));
+  const rows = await db.prepare('SELECT data FROM records ' + recordOrder).all();
+  return rows.results.map(row => JSON.parse(row.data));
 }
-function upsert(db, record) {
-  return db.prepare('INSERT INTO records (id, qso_date, data) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET qso_date=excluded.qso_date, data=excluded.data')
-    .bind(ADIF.recordId(record), record.QSO_DATE, JSON.stringify(record));
+
+async function saveRecord(db, input) {
+  const record = validateRecord(input.record), id = ADIF.recordId(record);
+  const fields = [id, record.QSO_DATE, JSON.stringify(record)];
+  const revision = crypto.randomUUID();
+  if (input.originalId == null) {
+    const inserted = await db.prepare('INSERT INTO records (id,qso_date,data,revision) VALUES (?,?,?,?) ON CONFLICT(id) DO NOTHING')
+      .bind(...fields, revision).run();
+    if (!inserted.meta.changes) throw new HttpError(409, '相同通联已存在，请编辑已有记录。');
+  } else {
+    const changed = await db.prepare('UPDATE OR IGNORE records SET id=?, qso_date=?, data=?, revision=? WHERE id=? AND revision=?')
+      .bind(...fields, revision, input.originalId, input.revision ?? null).run();
+    if (!changed.meta.changes) throw new HttpError(409, '保存冲突：原记录已变更、已删除或新标识已被占用。请保留表单内容，刷新核对。');
+  }
+  return json({record, id, revision});
+}
+
+async function markQsl(db, id, action) {
+  const fields = {sent:['$.QSL_SENT','$.QSLSDATE'], received:['$.QSL_RCVD','$.QSLRDATE']};
+  if (!Object.hasOwn(fields, action)) throw new HttpError(400, '请选择寄出或收到。');
+  const [status, date] = fields[action];
+  const today = new Date().toISOString().slice(0,10).replaceAll('-','');
+  const [, read] = await db.batch([
+    db.prepare("UPDATE records SET data=json_set(data, ?, 'Y', ?, ?), revision=? WHERE id=? AND json_extract(data, ?) IS NOT 'Y'")
+      .bind(status, date, today, crypto.randomUUID(), id, status),
+    db.prepare('SELECT data,revision FROM records WHERE id=?').bind(id)
+  ]);
+  const row = read.results[0];
+  if (!row) throw new HttpError(409, '通联已删除或标识已变更，请刷新。');
+  return json({id, record:JSON.parse(row.data), revision:row.revision});
+}
+
+async function importRecords(db, input) {
+  if (typeof input.adif !== 'string') throw new HttpError(400,'请提供 ADIF 文本。');
+  const incoming = ADIF.parse(input.adif).records;
+  if (!incoming.length) throw new HttpError(400,'没有可导入的通联记录。');
+  if (incoming.length > 1000) throw new HttpError(413,'每批最多导入 1000 条记录。');
+  const unique = new Map();
+  for (const raw of incoming) {
+    const record = validateRecord(raw), id = ADIF.recordId(record);
+    if (!unique.has(id)) unique.set(id, record);
+    else if (input.merge) Object.assign(unique.get(id), record);
+  }
+  const ids = [...unique.keys()], counts = [], writes = [];
+  // Count matching primary keys before writing, inside the same D1 transaction.
+  for (let i=0; i<ids.length; i+=100) {
+    const chunk = ids.slice(i,i+100);
+    counts.push(db.prepare('SELECT count(*) AS total FROM records WHERE id IN (' + chunk.map(() => '?').join(',') + ')').bind(...chunk));
+  }
+  const conflict = input.merge
+    ? 'DO UPDATE SET data=json_patch(records.data,excluded.data), revision=excluded.revision'
+    : 'DO NOTHING';
+  for (let i=0; i<ids.length; i+=30) {
+    const chunk = ids.slice(i,i+30);
+    const values = chunk.map(() => '(?,?,?,lower(hex(randomblob(16))))').join(',');
+    writes.push(db.prepare('INSERT INTO records (id,qso_date,data,revision) VALUES ' + values + ' ON CONFLICT(id) ' + conflict)
+      .bind(...chunk.flatMap(id => [id, unique.get(id).QSO_DATE, JSON.stringify(unique.get(id))])));
+  }
+  const results = await db.batch([...counts, ...writes]);
+  const existing = results.slice(0,counts.length).reduce((n, result) => n + result.results[0].total, 0);
+  const added = ids.length - existing, duplicates = incoming.length - added;
+  return json({added, updated:input.merge ? duplicates : 0, skipped:input.merge ? 0 : duplicates});
 }
 async function body(request) {
   if (!(request.headers.get('Content-Type') || '').startsWith('application/json')) throw new HttpError(415,'请发送 JSON 数据。');
@@ -75,57 +136,28 @@ async function api(request, env) {
   const user = await verifySession(request,env);
   if (!['GET','HEAD'].includes(request.method) && request.headers.get('Origin') !== url.origin) throw new HttpError(403,'管理操作仅允许来自同源后台页面。');
   if (path === '/api/admin/session' && request.method === 'GET') return json(user);
-  if (path === '/api/admin/snapshot' && request.method === 'GET') return json({user,config:await config(env.DB),records:await records(env.DB)});
+  if (path === '/api/admin/snapshot' && request.method === 'GET') {
+    const [cfg, rows] = await Promise.all([config(env.DB), env.DB.prepare('SELECT id,data,revision FROM records ' + recordOrder).all()]);
+    return json({user, config:cfg, records:rows.results.map(row => JSON.parse(row.data)),
+      revisions:Object.fromEntries(rows.results.map(row => [row.id,row.revision]))});
+  }
   if (path === '/api/admin/settings' && request.method === 'PUT') {
     const next = validateConfig(await body(request), await config(env.DB));
     await env.DB.prepare('UPDATE settings SET value = ? WHERE key = ?').bind(JSON.stringify(next),'station').run();
     return json({config:next});
   }
-  if (path === '/api/admin/records' && request.method === 'POST') {
-    const input = await body(request), record = validateRecord(input.record), id = ADIF.recordId(record);
-    const existing = await env.DB.prepare('SELECT id FROM records WHERE id = ?').bind(id).first();
-    if (existing && input.originalId !== id) throw new HttpError(409,'相同通联已存在，请编辑已有记录。');
-    const operations = [upsert(env.DB,record)];
-    if (input.originalId && input.originalId !== id) {
-      const original = await env.DB.prepare('SELECT id FROM records WHERE id = ?').bind(String(input.originalId)).first();
-      if(!original) throw new HttpError(409,'原记录已不存在，请刷新。');
-      operations.push(env.DB.prepare('DELETE FROM records WHERE id = ?').bind(input.originalId));
+  if (path === '/api/admin/records' && request.method === 'POST') return saveRecord(env.DB, await body(request));
+  if (path.startsWith('/api/admin/records/')) {
+    const id = decodeURIComponent(path.slice('/api/admin/records/'.length));
+    if (request.method === 'PATCH') return markQsl(env.DB, id, (await body(request)).action);
+    if (request.method === 'DELETE') {
+      const {revision} = await body(request);
+      const deleted = await env.DB.prepare('DELETE FROM records WHERE id=? AND revision=?').bind(id,revision ?? null).run();
+      if (!deleted.meta.changes) throw new HttpError(409, '通联已变更或已删除，请刷新后核对。');
+      return json({ok:true});
     }
-    await env.DB.batch(operations);
-    return json({record,id});
   }
-  if (path.startsWith('/api/admin/records/') && request.method === 'DELETE') {
-    await env.DB.prepare('DELETE FROM records WHERE id = ?').bind(decodeURIComponent(path.slice('/api/admin/records/'.length))).run();
-    return json({ok:true});
-  }
-  if (path === '/api/admin/import' && request.method === 'POST') {
-    const input = await body(request);
-    if (typeof input.adif !== 'string') throw new HttpError(400,'请提供 ADIF 文本。');
-    const incoming = ADIF.parse(input.adif).records.map(validateRecord);
-    if (!incoming.length) throw new HttpError(400,'没有可导入的通联记录。');
-    if (incoming.length > 1000) throw new HttpError(413,'每批最多导入 1000 条记录。');
-    const byId = new Map((await records(env.DB)).map(r=>[ADIF.recordId(r),r]));
-    let added = 0, updated = 0, skipped = 0;
-    const writes = new Map();
-    for(const r of incoming) {
-      const id=ADIF.recordId(r), exists=byId.get(id);
-      if(exists && !input.merge) {skipped++;continue;}
-      const next=exists?{...exists,...r}:r;
-      byId.set(id,next); writes.set(id,next); if(exists) updated++; else added++;
-    }
-    if(writes.size) {
-      const values=[...writes.values()], statements=[];
-      // 30 records = 90 bound parameters. A 1000-record import stays below
-      // D1 Free's 50 queries/invocation and 100 parameters/statement limits.
-      for(let i=0;i<values.length;i+=30) {
-        const chunk=values.slice(i,i+30);
-        statements.push(env.DB.prepare('INSERT INTO records (id,qso_date,data) VALUES '+chunk.map(()=>'(?,?,?)').join(',')+' ON CONFLICT(id) DO UPDATE SET qso_date=excluded.qso_date,data=excluded.data')
-          .bind(...chunk.flatMap(r=>[ADIF.recordId(r),r.QSO_DATE,JSON.stringify(r)])));
-      }
-      await env.DB.batch(statements);
-    }
-    return json({added,updated,skipped});
-  }
+  if (path === '/api/admin/import' && request.method === 'POST') return importRecords(env.DB, await body(request));
   if (path === '/api/admin/export' && request.method === 'GET') return new Response(ADIF.serialize(await records(env.DB),{header:{ADIF_VER:'3.1.4',PROGRAMID:'ham-qsl-log'}}),{headers:{'Content-Type':'text/plain; charset=utf-8','Content-Disposition':'attachment; filename="qsl-log-full.adi"','Cache-Control':'no-store'}});
   throw new HttpError(404,'接口不存在。');
 }

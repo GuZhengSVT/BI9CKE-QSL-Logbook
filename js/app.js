@@ -36,7 +36,7 @@ const App = {
     expanded: null,       // 展开详情的 record id
     activeTab: 'log',
     loading: true,
-    config: {}
+    config: null
   },
 
   tabs: {},               // 各模块注册 {name: renderFn}
@@ -44,9 +44,21 @@ const App = {
   async init() {
     this.bindEvents();
     this.showTab(location.hash ? location.hash.slice(1) : 'log');
+    try {
+      this.state.config = await Store.loadConfig();
+      this.updateSiteHeader();
+      if (['solar','satellites'].includes(this.state.activeTab)) this.renderAllTabs();
+      const snapshot = await Store.loadSnapshot();
+      this.state.config = snapshot.config;
+      this.state.records = snapshot.records;
+      this.satelliteTools?.setStation(snapshot.config.station);
+    } catch (error) {
+      this.state.loadError = error.message;
+    }
+    this.state.loading = false;
     this.updateSiteHeader();
-    this.state.config = await Store.loadConfig();
-    await this.refresh();
+    document.getElementById('nav-log-count').textContent = this.state.records.length.toLocaleString();
+    if (['log','stats'].includes(this.state.activeTab)) this.renderAllTabs();
   },
 
   /* ------------------------------------------------------ 站点标题（随语言） */
@@ -61,24 +73,25 @@ const App = {
     admin.hidden = !cfg.apiBaseUrl;
     if (cfg.apiBaseUrl) admin.href = new URL('/dashboard', cfg.apiBaseUrl).href;
     const status = document.getElementById('data-status');
-    status.hidden = !this.state.loading && !Store.isFallback();
-    status.textContent = I18N.t(this.state.loading ? 'logsLoading' : 'liveUnavailable');
-  },
-
-  /* ------------------------------------------------------------- 数据刷新 */
-  async refresh() {
-    this.state.records = await Store.getRecords();
-    this.state.loading = false;
-    this.updateSiteHeader();
-    this.renderAllTabs();
+    const needsLog = ['log','stats'].includes(this.state.activeTab);
+    const needsConfig = !this.state.config && ['solar','satellites'].includes(this.state.activeTab);
+    status.hidden = !(needsLog || needsConfig) || (!this.state.loading && !this.state.loadError && !Store.isFallback());
+    status.textContent = this.state.loadError ? I18N.t('initFail', {msg:this.state.loadError}) :
+      I18N.t(this.state.loading ? 'logsLoading' : 'liveUnavailable');
   },
 
   renderAllTabs() {
-    if (this.state.loading) return;
-    try { this.tabs[this.state.activeTab]?.(); } catch (e) { console.error('render error:', e); }
-
-    this.renderOverview();
-    StationMap.render(this.state.config, this.state.records);
+    const name = this.state.activeTab;
+    if (name === 'cards' || (['solar','satellites'].includes(name) && this.state.config)) {
+      this.tabs[name]();
+      return;
+    }
+    if (this.state.loading || this.state.loadError) return;
+    this.tabs[name]();
+    if (name === 'log') {
+      this.renderOverview();
+      StationMap.render(this.state.config, this.state.records);
+    }
   },
 
   /* --------------------------------------------------------------- 导航 */
@@ -95,8 +108,8 @@ const App = {
       el.classList.toggle('active', el.id === 'page-' + name);
     });
     if (history.replaceState) history.replaceState(null, '', '#' + name);
-    const fn = this.tabs[name];
-    if (fn && !this.state.loading) fn();
+    this.updateSiteHeader();
+    this.renderAllTabs();
     this.satelliteTools?.setActive(name==='satellites');
     this.solarPanel?.setActive(name==='solar');
     window.scrollTo(0, 0);
@@ -314,8 +327,8 @@ const App = {
       ['IOTA', rec.IOTA],
       ['DXCC', rec.DXCC],
       [I18N.t('fldCountry'), rec.COUNTRY],
-      [I18N.t('fldQslS'), sentLabel + (rec.QSL_SENT_DATE ? ' (' + ADIF.prettyDate(rec.QSL_SENT_DATE) + ')' : '')],
-      [I18N.t('fldQslR'), rcvdLabel + (rec.QSL_RCVD_DATE ? ' (' + ADIF.prettyDate(rec.QSL_RCVD_DATE) + ')' : '')],
+      [I18N.t('fldQslS'), sentLabel + (rec.QSLSDATE ? ' (' + ADIF.prettyDate(rec.QSLSDATE) + ')' : '')],
+      [I18N.t('fldQslR'), rcvdLabel + (rec.QSLRDATE ? ' (' + ADIF.prettyDate(rec.QSLRDATE) + ')' : '')],
       [I18N.t('fldQslVia'), rec.QSL_VIA],
       [I18N.t('fldQslMsg'), rec.QSLMSG],
       ['LoTW', `${rec.LOTW_QSL_SENT || '—'}/${rec.LOTW_QSL_RCVD || '—'}`],
@@ -335,10 +348,31 @@ window.App = App;
 window.Utils = Utils;
 
 App.tabs.log = () => App.log();
-App.tabs.satellites=()=>{
-  const el=document.getElementById('page-satellites');if(!el.classList.contains('active'))return;
-  if(!App.satelliteTools)App.satelliteTools=QslSat.mount(el,{apiBaseUrl:App.state.config.apiBaseUrl,station:App.state.config.station,language:I18N.getLang()});
-  else App.satelliteTools.setLanguage(I18N.getLang());
+let satelliteLibrary;
+App.tabs.satellites = async () => {
+  const el = document.getElementById('page-satellites');
+  if (!window.QslSat) {
+    el.textContent = I18N.t('satelliteLoading');
+    satelliteLibrary ||= new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = document.getElementById('satellite-library').content.querySelector('script').getAttribute('src');
+      script.onload = resolve;
+      script.onerror = () => { script.remove(); reject(new Error('Satellite tools unavailable')); };
+      document.head.append(script);
+    });
+    try { await satelliteLibrary; }
+    catch {
+      satelliteLibrary = null;
+      el.textContent = I18N.t('satelliteLoadFailed');
+      return;
+    }
+  }
+  if (App.state.activeTab !== 'satellites') return;
+  if (!App.satelliteTools) {
+    App.satelliteTools = QslSat.mount(el, {apiBaseUrl:App.state.config.apiBaseUrl, station:App.state.config.station, language:I18N.getLang()});
+  } else {
+    App.satelliteTools.setLanguage(I18N.getLang());
+  }
 };
 
 App.tabs.solar=()=>{

@@ -24,11 +24,13 @@ test('A stalled public API times out and uses the public repository snapshot', a
     }
   });
   const store = vm.runInContext(await source('store.js') + '\nStore;', context);
-  const loading = store.loadConfig();
+  assert.equal((await store.loadConfig()).call, 'TEST');
+  assert.deepEqual(requests,['data/config.json']);
+  const loading = store.loadSnapshot();
   await new Promise(resolve => setImmediate(resolve));
   controllers[1].abort(new DOMException('Timed out', 'TimeoutError'));
-  assert.equal((await loading).call, 'TEST');
-  const records = await store.getRecords();
+  const {config,records}=await loading;
+  assert.equal(config.call, 'TEST');
   assert.equal(records[0].CALL, 'TEST1');
   assert.equal(records[0].COMMENT, undefined);
   assert.equal(store.isFallback(), true);
@@ -48,7 +50,7 @@ test('Clock and navigation start before data arrives; only the selected tab rend
     document:{title:'',getElementById:node,querySelectorAll:() => []},
     setInterval() {},
     I18N:{t:key => key}, StationMap:{render() {renders.push('map');}},
-    Store:{loadConfig:() => new Promise(resolve => {finishConfig = resolve;}),getRecords:async () => [{CALL:'TEST1'}],isFallback:() => false}
+    Store:{loadConfig:() => new Promise(resolve => {finishConfig = resolve;}),loadSnapshot:async () => ({config:{call:'LIVE'},records:[{CALL:'TEST1'}]}),isFallback:() => false}
   });
   const app = vm.runInContext(await source('app.js') + '\nApp;', context);
   app.tabs = {log:() => renders.push('log'),cards:() => renders.push('cards')};
@@ -59,12 +61,14 @@ test('Clock and navigation start before data arrives; only the selected tab rend
   context.location.hash = '#cards';
   events.hashchange();
   assert.equal(app.state.activeTab, 'cards');
-  assert.deepEqual(renders, []);
+  assert.deepEqual(renders, ['cards']);
   finishConfig({call:'TEST'});
   await loading;
   assert.equal(app.state.loading, false);
   assert.equal(app.state.records.length, 1);
-  assert.deepEqual(renders, ['cards','map']);
+  assert.deepEqual(renders, ['cards']);
+  assert.equal(app.state.config.call,'LIVE');
+  assert.equal(node('nav-log-count').textContent,'1');
   assert.equal(node('data-status').hidden, true);
 });
 
@@ -99,4 +103,34 @@ test('Charts load on demand, share an in-flight request, and retry after failure
   context.echarts = {};
   scripts[1].onload();
   assert.equal(scripts.length, 2);
+});
+
+test('Satellite bundle loads once on demand, retries after a failure, and mounts only on the active tab',async()=>{
+  const scripts=[], panel={}, mounts=[];
+  const context=vm.createContext({
+    window:{}, I18N:{getLang:()=>'en',t:key=>key},
+    document:{
+      getElementById:id=>id==='satellite-library'
+        ? {content:{querySelector:()=>({getAttribute:()=>'js/satellite-tools.js?v=hash'})}}
+        : panel,
+      createElement:()=>({remove(){this.removed=true;}}),
+      head:{append:script=>scripts.push(script)}
+    }
+  });
+  const app=vm.runInContext(await source('app.js')+'\nApp;',context);
+  assert.equal(scripts.length,0);
+  app.state.activeTab='satellites';app.state.config={apiBaseUrl:'https://radio.example'};
+  const first=app.tabs.satellites(),again=app.tabs.satellites();
+  assert.equal(scripts.length,1);assert.match(scripts[0].src,/\?v=hash$/);
+  scripts[0].onerror();await Promise.all([first,again]);
+  assert.equal(panel.textContent,'satelliteLoadFailed');
+  const retry=app.tabs.satellites();
+  assert.equal(scripts.length,2);
+  app.state.activeTab='log';
+  context.QslSat=context.window.QslSat={mount:(el,options)=>{mounts.push(options);return {setLanguage(){}};}};
+  scripts[1].onload();await retry;
+  assert.equal(mounts.length,0);
+  app.state.activeTab='satellites';
+  await app.tabs.satellites();await app.tabs.satellites();
+  assert.equal(mounts.length,1);assert.equal(mounts[0].language,'en');
 });

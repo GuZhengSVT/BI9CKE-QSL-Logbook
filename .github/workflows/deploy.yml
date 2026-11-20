@@ -34,8 +34,14 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
       - name: Build public site and backend assets
-        run: npm ci && npm run build
+        run: npm run build
         env:
           QSL_API_BASE_URL: ${{ vars.QSL_API_BASE_URL }}
 

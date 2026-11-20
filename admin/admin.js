@@ -7,7 +7,7 @@ const Admin = {
     ['SAT_NAME','卫星名称','text'],['PROP_MODE','传播方式（卫星填 SAT）','text'],
     ['RST_SENT','RST 发出','text'],['RST_RCVD','RST 收到','text'],['GRIDSQUARE','对方网格','text'],
     ['COUNTRY','国家 / 地区','text'],['DXCC','DXCC 实体编号','text'],['LAT','对方纬度','text'],['LON','对方经度','text'],
-    ['QSL_SENT','QSL 发出','sent'],['QSL_RCVD','QSL 收到','received'],['QSL_SENT_DATE','寄出日期','date'],['QSL_RCVD_DATE','收到日期','date'],
+    ['QSL_SENT','QSL 发出','sent'],['QSL_RCVD','QSL 收到','received'],['QSLSDATE','寄出日期','date'],['QSLRDATE','收到日期','date'],
     ['LOTW_QSL_RCVD','LoTW 确认','received'],['QSL_VIA','QSL 途径','text'],['QSLMSG','卡片附言','text'],['COMMENT','私人备注（不公开）','text']
   ],
   esc(value) { return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
@@ -22,6 +22,7 @@ const Admin = {
     const element=document.getElementById('admin-message'); element.hidden=false; element.textContent=text; element.classList.toggle('error',error);
   },
   tab(name) {
+    this.activeTab = name;
     const labels={solar:['传播状况','太阳活动、地磁指标与 HF / VHF 传播状况。'],dashboard:['电台仪表盘','每一次呼叫，都让世界更近一点。'],satellites:['卫星工具','实时轨迹、过境预报与多普勒频移。'],qsl:['QSL 管理','整理待寄卡片，记录来自远方的确认。'],records:['通联记录','组合筛选与导出，快速找到每一次通联。'],entry:['新增通联','记录每一次相遇，保存后更新展示页。'],import:['导入 / 导出','导入标准 ADIF，或下载完整数据备份。'],settings:['电台设置','设置呼号，以及地图上代表本台的位置。']};
     document.querySelectorAll('.admin-section').forEach(el=>el.classList.toggle('active',el.id==='admin-'+name));
     document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.adminTab===name));
@@ -33,13 +34,41 @@ const Admin = {
     this.solarPanel?.setActive(name==='solar');
     this.satelliteTools?.setActive(name==='satellites');
     document.querySelector('[data-admin-tab=entry].sidebar-action')?.classList.toggle('active',name==='entry');
+    if (name==='settings') this.fillSettings();
+    this.renderCurrentTab();
     window.scrollTo(0,0);
   },
   async refresh() {
-    const data=await this.api('snapshot');this.records=data.records;this.config=data.config;
+    const data=await this.api('snapshot');this.records=data.records;this.revisions=data.revisions;this.config=data.config;
     this.satelliteTools?.setStation(this.config.station);
     document.getElementById('admin-user').textContent=data.user.username;
-    this.populateFilters();this.renderRecords();this.fillSettings();this.renderDashboard();this.renderQsl();
+    this.renderCurrentTab();
+  },
+  renderCurrentTab() {
+    switch (this.activeTab) {
+      case 'records': this.populateFilters(); this.renderRecords(); break;
+      case 'dashboard': this.renderDashboard(); break;
+      case 'qsl': this.renderQsl(); break;
+    }
+  },
+  applyRecord(originalId, saved) {
+    if (originalId) delete this.revisions[originalId];
+    if (saved) this.revisions[saved.id] = saved.revision;
+    if (saved && saved.id === originalId) {
+      const index = this.records.findIndex(record => ADIF.recordId(record) === originalId);
+      if (index >= 0) {
+        this.records[index] = saved.record;
+        return;
+      }
+    }
+    this.records = this.records.filter(record => {
+      const id = ADIF.recordId(record);
+      return id !== originalId && id !== saved?.id;
+    });
+    if (saved) {
+      const position = this.records.findIndex(record => ADIF.newestFirst(saved.record, record) < 0);
+      this.records.splice(position < 0 ? this.records.length : position, 0, saved.record);
+    }
   },
   populateFilters() {
     for(const [id,key,label] of [['filter-band','BAND','全部波段'],['filter-mode','MODE','全部模式']]) {
@@ -102,11 +131,11 @@ const Admin = {
     this.resetForm();
   },
   resetForm() {
-    this.editing=null;document.getElementById('record-form').reset();document.querySelector('[name="QSO_DATE"]').value=new Date().toISOString().slice(0,10);document.getElementById('record-form-title').textContent='新增通联';
+    this.editing=null;this.editRevision=null;document.getElementById('record-form').reset();document.querySelector('[name="QSO_DATE"]').value=new Date().toISOString().slice(0,10);document.getElementById('record-form-title').textContent='新增通联';
     this.previewContact();
   },
   edit(record) {
-    this.editing=record;this.tab('entry');
+    this.editing=record;this.editRevision=this.revisions[ADIF.recordId(record)];this.tab('entry');
     for(const [key,,type] of this.fields) {
       let value=record[key]||'';
       if(type==='date' && value.length===8) value=`${value.slice(0,4)}-${value.slice(4,6)}-${value.slice(6,8)}`;
@@ -130,10 +159,13 @@ const Admin = {
       const record={...this.editing};
       for(const [key,,type] of this.fields) {
         const value=document.querySelector(`#record-form [name="${key}"]`).value.trim();
+        if (type==='time' && this.editing?.[key] && ADIF.prettyTime(this.editing[key])===ADIF.prettyTime(value.replaceAll(':',''))) continue;
         record[key]=type==='date'?value.replaceAll('-',''):type==='time'?value.replaceAll(':',''):value;
       }
-      await this.api('records',{method:'POST',body:JSON.stringify({record,originalId:this.editing?ADIF.recordId(this.editing):null})});
-      await this.refresh();this.resetForm();this.tab('records');this.message('通联已保存，展示页将读取最新日志。');
+      const originalId = this.editing ? ADIF.recordId(this.editing) : null;
+      const saved = await this.api('records',{method:'POST',body:JSON.stringify({record,originalId,revision:this.editRevision})});
+      this.applyRecord(originalId, saved);
+      this.resetForm();this.tab('records');this.message('通联已保存，展示页将读取最新日志。');
     } catch(error) {this.message(error.message,true);} finally {button.disabled=false;}
   },
   fillSettings() {
@@ -151,7 +183,11 @@ const Admin = {
     event.preventDefault();const form=event.currentTarget,button=document.getElementById('settings-save');button.disabled=true;
     try {
       const data={call:form.elements.call.value,name:form.elements.name.value,station:{grid:form.elements.grid.value,lat:form.elements.lat.value,lon:form.elements.lon.value}};
-      await this.api('settings',{method:'PUT',body:JSON.stringify(data)});await this.refresh();this.message('电台设置已保存，地图将使用这个位置。');
+      const saved = await this.api('settings',{method:'PUT',body:JSON.stringify(data)});
+      this.config=saved.config;this.satelliteTools?.setStation(this.config.station);
+      if (this.activeTab==='settings') this.fillSettings();
+      else this.renderCurrentTab();
+      this.message('电台设置已保存，地图将使用这个位置。');
     } catch(error) {this.message(error.message,true);} finally {button.disabled=false;}
   },
   async showLogin() {
@@ -225,10 +261,16 @@ const Admin = {
       const button=event.target.closest('[data-qsl-action]'),row=event.target.closest('[data-id]');if(!button||!row)return;
       const original=this.records.find(r=>ADIF.recordId(r)===row.dataset.id);if(!original)return;
       if(button.dataset.qslAction==='edit')return this.edit(original);
-      const record={...original},today=new Date().toISOString().slice(0,10).replaceAll('-','');
-      if(button.dataset.qslAction==='sent'){record.QSL_SENT='Y';record.QSL_SENT_DATE=today;}else{record.QSL_RCVD='Y';record.QSL_RCVD_DATE=today;}
-      button.disabled=true;
-      try {await this.api('records',{method:'POST',body:JSON.stringify({record,originalId:row.dataset.id})});await this.refresh();this.message(`${record.CALL} 已标记${button.dataset.qslAction==='sent'?'寄出':'收到'}。`);}catch(error){button.disabled=false;this.message(error.message,true);}
+      const action=button.dataset.qslAction;
+      const controls=row.querySelectorAll('button');
+      controls.forEach(control => {control.disabled=true;});
+      try {
+        const saved=await this.api('records/'+encodeURIComponent(row.dataset.id),{method:'PATCH',body:JSON.stringify({action})});
+        this.applyRecord(row.dataset.id,saved);
+        this.renderCurrentTab();
+        this.message(saved.record.CALL + (action==='sent'?' 已标记寄出。':' 已标记收到。'));
+      } catch(error) {this.message(error.message,true);}
+      finally {controls.forEach(control => {control.disabled=false;});}
     };
     document.getElementById('admin-prev').onclick=()=>{this.page--;this.renderRecords();};document.getElementById('admin-next').onclick=()=>{this.page++;this.renderRecords();};
     document.getElementById('admin-log-body').onclick=async event=>{
@@ -237,7 +279,10 @@ const Admin = {
       if(button.dataset.recordAction==='edit') return this.edit(record);
       if(!confirm(`确认删除 ${record.CALL} ${ADIF.prettyDate(record.QSO_DATE)}？`))return;
       button.disabled=true;
-      try {await this.api('records/'+encodeURIComponent(row.dataset.id),{method:'DELETE'});await this.refresh();this.message('记录已删除。');}catch(error){button.disabled=false;this.message(error.message,true);}
+      try {
+        await this.api('records/'+encodeURIComponent(row.dataset.id),{method:'DELETE',body:JSON.stringify({revision:this.revisions[row.dataset.id]})});
+        this.applyRecord(row.dataset.id,null);this.renderCurrentTab();this.message('记录已删除。');
+      }catch(error){button.disabled=false;this.message(error.message,true);}
     };
     document.getElementById('settings-form').onsubmit=event=>this.saveSettings(event);document.getElementById('settings-form').oninput=()=>this.previewLocation();
     document.getElementById('adif-file').onchange=async event=>{if(event.target.files[0])document.getElementById('adif-text').value=await event.target.files[0].text();};
